@@ -1,21 +1,24 @@
 # Swarm Brain
 
-Dashboard 3D in tempo reale: uno sciame di agenti IA mostrato come regioni di un cervello.
-Scrivi un obiettivo, un orchestratore lo divide in sotto-compiti, agenti specializzati li svolgono,
-e ogni loro azione diventa un evento che anima il cervello nel browser.
+A real-time 3D dashboard that shows a swarm of AI agents as the regions of a brain.
+You type a goal, an orchestrator splits it into subtasks, specialized agents carry them out,
+and every action they take becomes an event that animates the brain in the browser.
 
-| Agente | Regione | Cosa fa |
+| Agent | Brain region | What it does |
 | --- | --- | --- |
-| `planner` | lobo frontale | divide l'obiettivo in sotto-compiti (piano JSON) |
-| `researcher` | lobo parietale | raccoglie ciò che il modello sa sul tema |
-| `memory` | lobo temporale | riassume i risultati in un contesto condiviso |
-| `executor` | corteccia motoria | scrive il risultato e lo rivede se serve |
-| `critic` | corteccia cingolata anteriore | controlla la bozza e dà un verdetto |
-| `orchestrator` | talamo (centro) | smista il lavoro; è codice, non chiama modelli |
+| `planner` | prefrontal cortex | splits the goal into subtasks (a JSON plan) |
+| `researcher` | parietal lobe | gathers what the model knows about the topic |
+| `memory` | hippocampus (temporal lobe) | summarizes the results into a shared context |
+| `executor` | motor cortex | writes the result and revises it if needed |
+| `critic` | anterior cingulate cortex | checks the draft and gives a verdict |
+| `orchestrator` | thalamus (centre) | routes the work; it is plain code and calls no model |
 
-## Avvio rapido (simulato, senza chiavi)
+The dashboard interface is in Italian. The companion page [Inside an LLM](#inside-an-llm-llm)
+is available in English and Italian.
 
-Serve Python 3.11 o più recente.
+## Quick start (simulated, no API key)
+
+Requires Python 3.11 or newer.
 
 ```bash
 cd swarm-brain
@@ -24,130 +27,136 @@ python3 -m venv .venv
 MODE=simulated .venv/bin/uvicorn backend.main:app --port 5173 --timeout-graceful-shutdown 2
 ```
 
-Apri <http://localhost:5173/>, scrivi un obiettivo e premi **AVVIA**.
-In questa modalità nessun modello viene chiamato: gli eventi sono generati da un simulatore e
-l'etichetta **SIMULATED** resta visibile. Il backend serve anche il frontend, quindi basta una porta.
+Open <http://localhost:5173/>, type a goal and press **AVVIA** (start).
+In this mode no model is called: events come from a simulator and the **SIMULATED** badge stays
+visible. The backend also serves the frontend, so a single port is enough.
 
-Se il backend gira su un server remoto, inoltra la porta dal tuo computer:
+If the backend runs on a remote server, forward the port from your computer:
 
 ```bash
-ssh -N -L 5173:127.0.0.1:5173 utente@server
+ssh -N -L 5173:127.0.0.1:5173 user@server
 ```
 
-## Agenti reali (NVIDIA o altro endpoint compatibile OpenAI)
+## Real agents (NVIDIA or any OpenAI-compatible endpoint)
 
-1. Crea il file delle variabili d'ambiente e inserisci la chiave:
+1. Create the environment file and add your key:
 
    ```bash
    cp .env.example .env
-   # in .env: MODE=live e NVIDIA_API_KEY=la-tua-chiave
+   # in .env: MODE=live and NVIDIA_API_KEY=your-key
    ```
 
-2. Scegli un modello tra quelli disponibili per la tua chiave:
+2. Pick one of the models available to your key:
 
    ```bash
-   .venv/bin/python list_models.py          # tutti
-   .venv/bin/python list_models.py llama    # solo gli id che contengono "llama"
+   .venv/bin/python list_models.py          # all of them
+   .venv/bin/python list_models.py llama    # only ids containing "llama"
    ```
 
-3. Incolla l'id in `defaults.model` dentro `backend/config.yaml`.
+3. Paste the id into `defaults.model` in `backend/config.yaml`.
 
-4. Prova una singola chiamata, poi avvia:
+4. Try a single call, then start the server:
 
    ```bash
-   .venv/bin/python -m backend.llm "Rispondi con una parola: ciao"
+   .venv/bin/python -m backend.llm "Answer with one word: hello"
    .venv/bin/uvicorn backend.main:app --port 5173 --timeout-graceful-shutdown 2
    ```
 
-5. Compito di esempio, dalla pagina oppure da terminale:
+5. Run an example task, from the page or from a terminal:
 
    ```bash
    curl -X POST localhost:5173/task -H 'content-type: application/json' \
-        -d '{"goal": "Ricerca i trend dell agritech in Italia e scrivi un report breve"}'
-   curl -N localhost:5173/events    # flusso degli eventi
+        -d '{"goal": "Research agritech trends in Italy and write a short report"}'
+   curl -N localhost:5173/events    # event stream
    ```
 
-Se manca la chiave o il modello, `POST /task` risponde 503 con il motivo. Non viene mai prodotto
-un risultato finto al posto di quello reale.
+If the key or the model is missing, `POST /task` answers 503 with the reason. A fake result is
+never produced in place of a real one.
 
-**Limite importante:** nessun agente ha accesso al web. Il `researcher` usa solo ciò che il modello
-ha imparato in addestramento, e il risultato finale porta una nota che lo dice. I fatti vanno verificati.
+**Important limit:** no agent has web access. The `researcher` only uses what the model learned
+during training, and the final result carries a note saying so. Facts must be checked.
 
-## Configurazione (`backend/config.yaml`)
+## Configuration (`backend/config.yaml`)
 
-Ogni agente eredita da `defaults` e può cambiare `provider`, `base_url`, `api_key_env`, `model`,
-`temperature`, `max_tokens`. Le chiavi non stanno mai nel file: `api_key_env` è il *nome* della
-variabile d'ambiente che le contiene. Dopo una modifica riavvia il backend.
+Every agent inherits from `defaults` and can override `provider`, `base_url`, `api_key_env`,
+`model`, `temperature` and `max_tokens`. Keys never go in the file: `api_key_env` is the *name*
+of the environment variable that holds the key. Restart the backend after a change.
 
-| Limite | Default | Significato |
+| Limit | Default | Meaning |
 | --- | --- | --- |
-| `max_concurrency` | 3 | richieste al modello in corso nello stesso momento |
-| `requests_per_minute` | 30 | richieste al minuto, tentativi ripetuti inclusi |
-| `max_calls_per_run` | 25 | chiamate per esecuzione; oltre, l'esecuzione si ferma con un evento `error` |
-| `max_tokens_per_call` | 1024 | tetto di `max_tokens` per ogni chiamata |
-| `max_retries` | 5 | nuovi tentativi su 429, errori di rete e 5xx, con attesa che raddoppia |
+| `max_concurrency` | 3 | model requests in flight at the same time |
+| `requests_per_minute` | 30 | requests per minute, retries included |
+| `max_calls_per_run` | 25 | calls per run; beyond it the run stops with an `error` event |
+| `max_tokens_per_call` | 1024 | upper bound for `max_tokens` on every call |
+| `max_retries` | 5 | retries on 429, network errors and 5xx, with a wait that doubles each time |
 
-## Parametri dell'URL
+## URL parameters
 
-| Parametro | Effetto |
+| Parameter | Effect |
 | --- | --- |
-| `?vertical=1` | layout 9:16 per registrare lo schermo |
-| `?demo=1` | avvia subito un compito con l'obiettivo nella casella |
-| `?theme=light` | tema chiaro |
-| `?local=1` | usa il simulatore nel browser, senza backend |
-| `?err=1` | con `?local=1`: forza un errore 429 simulato |
+| `?vertical=1` | 9:16 layout for screen recording |
+| `?demo=1` | starts a task right away with the goal in the input box |
+| `?theme=light` | light theme |
+| `?local=1` | uses the in-browser simulator, no backend needed |
+| `?err=1` | with `?local=1`: forces a simulated 429 error |
 
-Per un video verticale: `http://localhost:5173/?vertical=1&demo=1`.
+For a vertical video: `http://localhost:5173/?vertical=1&demo=1`.
 
-## Parte didattica
+## Why a brain
 
-Un clic su un agente (nell'elenco o sull'etichetta 3D) apre una scheda: cosa fa l'agente, cosa fa
-la regione del cervello, dove il paragone regge e dove si rompe. **perché un cervello?** in alto
-spiega l'idea generale. I testi stanno in `frontend/analogies.js`; ogni voce ha un campo `wiki`
-per collegare una pagina di approfondimento (il link appare solo se il campo è compilato).
+Clicking an agent (in the list or on its 3D label) opens a card: what the agent does, what the
+brain region does, where the comparison holds and where it breaks. **perché un cervello?** (why a
+brain?) at the top explains the general idea. The texts live in `frontend/analogies.js`; each card
+links to the matching section of the wiki entry
+[Sciame di agenti](https://wiki.daniellomario.com/it/agent-swarm) (English version:
+[Agent swarm](https://wiki.daniellomario.com/agent-swarm)), which explains the analogies with sources.
 
-Il frontend funziona anche da solo come pagina statica (`?local=1`), quindi si può pubblicare
-dentro un altro sito senza backend.
+The frontend also works on its own as a static page (`?local=1`), so it can be published inside
+another site without the backend.
 
-## Dentro un LLM (`/llm/`)
+## Inside an LLM (`/llm/`)
 
-Seconda pagina, indipendente dal backend: <http://localhost:5173/llm/>. Mostra in 3D il calcolo di un
-modello linguistico vero ma minuscolo (16.080 parametri, 2 strati), eseguito nel browser. Una guida in
-12 passi accompagna dal testo alle probabilità della prossima lettera; in basso si può scrivere
-l'inizio di una parola e farla completare, una lettera alla volta.
+A second page, independent of the backend: <http://localhost:5173/llm/>, also published at
+<https://wiki.daniellomario.com/lab/inside-an-llm/>. It shows in 3D the computation of a real but
+tiny language model (16,080 parameters, 2 layers), run in the browser. A 12-step guide goes from the
+text to the probabilities of the next letter; at the bottom you can type the start of a word and let
+the model complete it, one letter at a time.
 
-- Il modello lavora a lettere ed è stato addestrato sulle 12.338 parole diverse della Divina
-  Commedia (edizione Project Gutenberg, pubblico dominio). Inventa parole che suonano come quelle
-  di Dante; non ne conosce il significato.
-- Ogni cubetto è un numero calcolato davvero: `frontend/llm/gpt.js` rifà gli stessi conti di PyTorch
-  (differenza massima sui punteggi: 5,5e-6, controllata con il vettore di prova dentro `model.json`).
-- Per riaddestrarlo: istruzioni in testa a `tools/train_tiny_gpt.py` (serve `torch`, circa 3 minuti su CPU).
-- `?step=N` apre la guida al passo N (da 0); `?vertical=1` forza il layout 9:16.
-- È una pagina statica: la cartella `frontend/llm/` più `frontend/style.css` bastano per pubblicarla altrove.
+- The model works on letters and was trained on the 12,338 distinct words of Dante's *Divine
+  Comedy* (Project Gutenberg edition, public domain). It invents words that sound like Dante's
+  Italian; it does not know what they mean.
+- Every cube is a number that is really computed: `frontend/llm/gpt.js` does the same arithmetic as
+  PyTorch (largest difference on the scores: 5.5e-6, checked against the test vector in `model.json`).
+- To retrain it: instructions at the top of `tools/train_tiny_gpt.py` (needs `torch`, about 3 minutes on a CPU).
+- `?lang=en|it` picks the language (default: the browser's), `?step=N` opens the guide at step N
+  (from 0), `?vertical=1` forces the 9:16 layout.
+- It is a static page. `tools/export_llm_page.py <folder>` copies it, with the shared stylesheet,
+  into a self-contained folder for another site (this is how the wiki copy is made).
 
-## Eventi
+## Events
 
-`GET /events` è un flusso SSE. Ogni evento:
+`GET /events` is an SSE stream. Each event:
 
 ```json
 { "id": "…", "ts": 1794611812.8, "type": "task_started|message|tool_call|task_done|error|final",
-  "agent": "planner", "target": null, "label": "max 80 caratteri", "payload": {} }
+  "agent": "planner", "target": null, "label": "at most 80 characters", "payload": {} }
 ```
 
-- `tool_call`: chiamata al modello, con `payload.phase` = `start`, `end` (e `payload.tokens`) o `failed`.
-- `error`: `payload.fatal` = `true` chiude l'esecuzione; `false` è un tentativo che verrà ripetuto.
-- `final`: `payload.result` è il testo finale; `payload.simulated` dice se è un segnaposto.
+- `tool_call`: a model call, with `payload.phase` = `start`, `end` (plus `payload.tokens`) or `failed`.
+- `error`: `payload.fatal` = `true` ends the run; `false` is an attempt that will be retried.
+- `final`: `payload.result` is the final text; `payload.simulated` tells whether it is a placeholder.
 
-Altre rotte: `POST /task` (`{"goal": "…"}`; 409 se un compito è già in corso), `GET /status`.
+Other routes: `POST /task` (`{"goal": "…"}`; 409 if a task is already running), `GET /status`.
 
-## Struttura
+## Layout
 
 ```
-backend/   main.py (API e SSE) · orchestrator.py · agents.py (prompt) · llm.py (limiti e retry)
-           events.py (schema e bus) · simulator.py (MODE=simulated) · config.yaml
-frontend/  index.html · main.js · brain.js (cervello 3D) · hud.js (pannelli) · analogies.js
-           localsim.js (simulatore nel browser) · style.css
-frontend/llm/  index.html · main.js · gpt.js (il modello) · scene.js (3D) · tour.js (testi della guida)
-               model.json (pesi) · llm.css
-tools/train_tiny_gpt.py · list_models.py · .env.example
+backend/       main.py (API and SSE) · orchestrator.py · agents.py (prompts) · llm.py (limits, retries)
+               events.py (schema and bus) · simulator.py (MODE=simulated) · config.yaml
+frontend/      index.html · main.js · brain.js (3D brain) · hud.js (panels) · analogies.js
+               localsim.js (in-browser simulator) · style.css
+frontend/llm/  index.html · main.js · gpt.js (the model) · scene.js (3D) · tour.js (guide texts)
+               i18n.js (interface words) · links.js · model.json (weights) · llm.css
+tools/         train_tiny_gpt.py · export_llm_page.py
+list_models.py · .env.example
 ```

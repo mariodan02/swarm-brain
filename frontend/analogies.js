@@ -1,7 +1,8 @@
 // Teaching content: what each agent does, what its brain region does, where the analogy holds
 // and where it breaks. Kept as plain data so another page (for example a wiki note) can reuse it.
 //
-// `wiki`: URL of a page with more detail, or null. A link is shown only when it is set.
+// `wiki`: URL of a page with more detail (the wiki entry "Sciame di agenti"), or null.
+// A link is shown only when it is set.
 
 export const WHY = {
   title: 'perché un cervello?',
@@ -11,7 +12,7 @@ export const WHY = {
     'È un’immagine per capire, non un modello del cervello. Un cervello ha circa 86 miliardi di neuroni che lavorano tutti insieme e imparano di continuo. Qui ci sono cinque ruoli che chiamano a turno un modello linguistico, e tra un’esecuzione e l’altra non imparano nulla.',
     'Anche le regioni vere non hanno confini e compiti così netti: quasi ogni funzione coinvolge più aree. Tocca un agente per vedere dove il paragone regge e dove no.',
   ],
-  wiki: null,
+  wiki: 'https://wiki.daniellomario.com/it/agent-swarm#lanalogia-con-il-cervello',
 };
 
 // fit: how well the analogy holds: 'buona' | 'parziale' | 'debole'
@@ -22,7 +23,7 @@ export const ANALOGIES = {
     brain: 'La parte anteriore del lobo frontale (corteccia prefrontale) è legata alle funzioni esecutive: fissare uno scopo, pianificare i passi, frenare le azioni fuori luogo.',
     holds: 'In entrambi i casi c’è una parte che, prima di agire, trasforma uno scopo in una sequenza di passi.',
     breaks: 'Il planner scrive il piano una volta sola, come un elenco. Nel cervello pianificare e agire si intrecciano di continuo e coinvolgono molte aree.',
-    wiki: null,
+    wiki: 'https://wiki.daniellomario.com/it/agent-swarm#pianificare-corteccia-prefrontale',
   },
   researcher: {
     fit: 'parziale',
@@ -30,7 +31,7 @@ export const ANALOGIES = {
     brain: 'Il lobo parietale unisce le informazioni che arrivano dai sensi (tatto, posizione del corpo, spazio) e aiuta a dirigere l’attenzione.',
     holds: 'Entrambi mettono insieme informazioni sparse in un quadro che le altre parti possono usare.',
     breaks: 'Il lobo parietale lavora su ciò che i sensi percepiscono ora. Il researcher non percepisce nulla: ripesca dalla memoria del modello, e può sbagliare.',
-    wiki: null,
+    wiki: 'https://wiki.daniellomario.com/it/agent-swarm#raccogliere-informazioni-lobo-parietale',
   },
   memory: {
     fit: 'buona',
@@ -38,7 +39,7 @@ export const ANALOGIES = {
     brain: 'Nella parte interna del lobo temporale c’è l’ippocampo, necessario per formare nuovi ricordi di fatti ed eventi.',
     holds: 'Entrambi conservano ciò che è appena successo perché serva più tardi.',
     breaks: 'L’ippocampo consolida i ricordi nel tempo, cambiando le connessioni tra neuroni. Qui la memoria è un riassunto di testo che sparisce a fine esecuzione.',
-    wiki: null,
+    wiki: 'https://wiki.daniellomario.com/it/agent-swarm#ricordare-ippocampo',
   },
   executor: {
     fit: 'parziale',
@@ -46,7 +47,7 @@ export const ANALOGIES = {
     brain: 'La corteccia motoria primaria invia i comandi per i movimenti volontari: è l’ultimo passaggio prima dell’azione.',
     holds: 'Entrambi sono l’anello finale: trasformano ciò che è stato deciso in qualcosa di concreto.',
     breaks: 'La corteccia motoria fa parte del lobo frontale: disegnarla come regione separata è una semplificazione. E scrivere un testo richiede scelte proprie, non solo eseguire.',
-    wiki: null,
+    wiki: 'https://wiki.daniellomario.com/it/agent-swarm#agire-corteccia-motoria',
   },
   critic: {
     fit: 'buona',
@@ -54,7 +55,7 @@ export const ANALOGIES = {
     brain: 'La corteccia cingolata anteriore sta sulla faccia interna di ogni emisfero, sopra il centro del cervello. Si attiva quando commettiamo un errore o quando due risposte possibili sono in conflitto, e segnala che serve più controllo.',
     holds: 'In entrambi i casi una parte non produce il lavoro ma lo sorveglia: si accorge che qualcosa non va e fa correggere.',
     breaks: 'Il critic legge la bozza solo alla fine, una volta. La cingolata anteriore controlla di continuo, in frazioni di secondo, e ha anche altri compiti, legati al dolore e alle emozioni.',
-    wiki: null,
+    wiki: 'https://wiki.daniellomario.com/it/agent-swarm#controllare-corteccia-cingolata-anteriore',
   },
   orchestrator: {
     fit: 'parziale',
@@ -62,6 +63,6 @@ export const ANALOGIES = {
     brain: 'Al centro del cervello c’è il talamo, una stazione di smistamento: quasi tutti i segnali dei sensi passano da lì prima di arrivare alla corteccia.',
     holds: 'In entrambi i casi quasi tutti i messaggi passano da un punto centrale che li instrada.',
     breaks: 'Il talamo instrada ma non comanda: il cervello non ha un capo unico. L’orchestratore invece decide tutto, con regole fisse scritte da un programmatore.',
-    wiki: null,
+    wiki: 'https://wiki.daniellomario.com/it/agent-swarm#coordinare-talamo',
   },
 };

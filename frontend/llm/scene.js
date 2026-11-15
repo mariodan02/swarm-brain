@@ -24,7 +24,7 @@ const DIM = 0.14;      // brightness of everything outside the current step
  * Where every tensor sits. A slab shows `rows` x `cols` cells of `tensor`, starting at column
  * `colStart`. kind: 'signed' (scaled by the tensor's largest value), 'weight' or 'prob' (0..1).
  */
-export function buildLayout(config, T) {
+export function buildLayout(config, T, L) {
   const C = config.n_embd, H = config.n_head, V = config.vocab.length, W = C * DX;
   const slabs = [];
   let x = 0;
@@ -34,51 +34,51 @@ export function buildLayout(config, T) {
     label: o.label ?? null, name: o.name ?? o.label ?? null,
   });
 
-  put('tok', { label: 'vettore di ogni lettera' });
-  put('pos', { y: BRIDGE_Y, label: 'vettore di ogni posizione' });
+  put('tok', { label: L.tok });
+  put('pos', { y: BRIDGE_Y, label: L.pos });
   x += W + GAP;
-  put('x0', { label: 'somma: entra nel flusso' });
+  put('x0', { label: L.x0 });
   x += W + GAP;
 
   for (let l = 0; l < config.n_layer; l++) {
     const id = (name) => `l${l}.${name}`;
-    put(id('ln1'), { y: BRIDGE_Y, label: 'normalizzazione' });
+    put(id('ln1'), { y: BRIDGE_Y, label: L.ln });
     x += W + GAP;
-    put(id('q'), { y: BRIDGE_Y + 2 * SHEET_Y, label: 'query: cosa cerco' });
-    put(id('k'), { y: BRIDGE_Y + SHEET_Y, label: 'key: cosa offro' });
-    put(id('v'), { y: BRIDGE_Y, label: 'value: cosa passo' });
+    put(id('q'), { y: BRIDGE_Y + 2 * SHEET_Y, label: L.q });
+    put(id('k'), { y: BRIDGE_Y + SHEET_Y, label: L.k });
+    put(id('v'), { y: BRIDGE_Y, label: L.v });
     x += W + GAP;
     for (let h = 0; h < H; h++) {
-      put(id(`att${h}`), { y: BRIDGE_Y, cols: T, kind: 'weight', name: `attenzione · testa ${h + 1}`, label: h === 0 ? 'attenzione: una griglia per testa' : null });
+      put(id(`att${h}`), { y: BRIDGE_Y, cols: T, kind: 'weight', name: L.head(h + 1), label: h === 0 ? L.att : null });
       x += T * DX + GAP * 0.6;
     }
     x += GAP * 0.4;
-    put(id('mix'), { y: BRIDGE_Y, label: 'valori mescolati' });
+    put(id('mix'), { y: BRIDGE_Y, label: L.mix });
     x += W + GAP;
-    put(id('aout'), { y: BRIDGE_Y, label: 'uscita dell’attenzione' });
+    put(id('aout'), { y: BRIDGE_Y, label: L.aout });
     x += W + GAP;
-    put(id('x1'), { label: 'flusso + attenzione' });
+    put(id('x1'), { label: L.x1 });
     x += W + GAP;
-    put(id('ln2'), { y: BRIDGE_Y, label: 'normalizzazione' });
+    put(id('ln2'), { y: BRIDGE_Y, label: L.ln });
     x += W + GAP;
     for (let s = 0; s < 4; s++) {
       put(id(`hid.${s}`), {
         tensor: id('hid'), colStart: s * C, y: BRIDGE_Y + s * SHEET_Y,
-        label: s === 3 ? `strato nascosto: ${4 * C} numeri su 4 piani` : null,
+        label: s === 3 ? L.hid(4 * C) : null, name: L.hidName,
       });
     }
     x += W + GAP;
-    put(id('mlp'), { y: BRIDGE_Y, label: 'uscita del MLP' });
+    put(id('mlp'), { y: BRIDGE_Y, label: L.mlp });
     x += W + GAP;
-    put(id('x2'), { label: 'flusso + MLP' });
+    put(id('x2'), { label: L.x2 });
     x += W + GAP;
   }
 
-  put('lnf', { label: 'normalizzazione finale' });
+  put('lnf', { label: L.lnf });
   x += W + GAP;
-  put('logits', { cols: V, label: 'un punteggio per lettera' });
+  put('logits', { cols: V, label: L.logits });
   x += V * DX + GAP;
-  put('probs', { rows: 1, z0: T - 1, cols: V, kind: 'prob', hScale: 7, dx: 0.7, label: 'probabilità della prossima lettera' });
+  put('probs', { rows: 1, z0: T - 1, cols: V, kind: 'prob', hScale: 7, dx: 0.7, label: L.probs });
   x += V * 0.7;
   return { slabs, length: x };
 }
@@ -97,9 +97,11 @@ export class LLMScene {
    * @param {HTMLCanvasElement} canvas
    * @param {HTMLElement} labelLayer
    * @param {object} config model config
+   * @param {object} text slab names and other words drawn in the scene (see i18n.js, `scene`)
    */
-  constructor(canvas, labelLayer, config) {
+  constructor(canvas, labelLayer, config, text) {
     this.config = config;
+    this.text = text;
     this.labelLayer = labelLayer;
     this.pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
     this.size = { w: 1, h: 1 };
@@ -124,7 +126,7 @@ export class LLMScene {
     this.controls.addEventListener('start', () => { this.tween = null; }); // the user takes over
 
     // One instanced mesh for every cell, sized for the longest text.
-    const full = buildLayout(config, config.block);
+    const full = buildLayout(config, config.block, text);
     this.capacity = full.slabs.reduce((n, s) => n + s.rows * s.cols, 0);
     this.cells = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial(), this.capacity);
     this.cells.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -165,7 +167,7 @@ export class LLMScene {
    */
   setTrace(tensors, letters, vocabLetters) {
     const T = letters.length;
-    const { slabs, length } = buildLayout(this.config, T);
+    const { slabs, length } = buildLayout(this.config, T, this.text);
     this.slabs = slabs;
     this.length = length;
     this.T = T;
@@ -288,7 +290,7 @@ export class LLMScene {
     const s = this.slabs[slab];
     [...probs.keys()].filter((c) => probs[c] >= 0.05).sort((a, b) => probs[b] - probs[a]).slice(0, 3).forEach((c) => {
       const at = new THREE.Vector3(s.x + (c + 0.5) * s.dx, s.y + probs[c] * 0.9 * s.hScale + 1.1, s.z0);
-      add(c === 0 ? 'fine' : vocabLetters[c], `${(probs[c] * 100).toFixed(0)}%`, at, slab, 'lane top');
+      add(c === 0 ? this.text.end : vocabLetters[c], `${(probs[c] * 100).toFixed(0)}%`, at, slab, 'lane top');
     });
   }
 

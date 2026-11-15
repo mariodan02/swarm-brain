@@ -14,8 +14,8 @@
 /* ---------- header ---------- */
 
 #head { top: 14px; left: 18px; display: flex; align-items: flex-end; gap: 18px; }
-#back { color: var(--dim); font-size: 11px; text-decoration: none; border-bottom: 1px dashed var(--dim); padding-bottom: 2px; }
-#back:hover { color: var(--cyan); border-bottom-color: var(--cyan); }
+#back, #lang-switch { color: var(--dim); font-size: 11px; text-decoration: none; border-bottom: 1px dashed var(--dim); padding-bottom: 2px; }
+#back:hover, #lang-switch:hover { color: var(--cyan); border-bottom-color: var(--cyan); }
 
 /* ---------- guide ---------- */
 
