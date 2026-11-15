@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dentro un LLM</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="llm.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="stage">
+    <canvas id="scene"></canvas>
+    <div id="labels"></div>
+    <div class="fx"></div>
+    <div id="tip" hidden></div>
+
+    <header id="head">
+      <div class="brand">
+        <h1>DENTRO<span>UN LLM</span></h1>
+        <span class="sub" id="model-info">mini-GPT</span>
+      </div>
+      <a id="back" href="../">← swarm brain</a>
+    </header>
+
+    <section id="guide" class="panel">
+      <div class="ptitle"><span id="step-count"></span><span>guida</span></div>
+      <div id="guide-body">
+        <h2 id="step-title"></h2>
+        <div id="step-text"></div>
+      </div>
+      <div id="guide-nav">
+        <button id="prev" type="button">← indietro</button>
+        <button id="next" type="button">avanti →</button>
+      </div>
+    </section>
+
+    <aside id="nextletter" class="panel">
+      <div class="ptitle">prossima lettera</div>
+      <ol id="nextlist"></ol>
+    </aside>
+
+    <form id="bar" class="panel" autocomplete="off">
+      <span class="prompt">&gt;</span>
+      <input id="word" type="text" maxlength="11" spellcheck="false" autocapitalize="off" placeholder="inizia una parola…" value="selv">
+      <span id="ended" hidden>parola finita</span>
+      <label id="temp-label" for="temp">temperatura <output id="temp-out">1,0</output></label>
+      <input id="temp" type="range" min="0.2" max="1.6" step="0.1" value="1">
+      <button id="one" type="button">+1 lettera</button>
+      <button id="auto" type="submit">parola intera</button>
+      <button id="clear" type="button">svuota</button>
+    </form>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

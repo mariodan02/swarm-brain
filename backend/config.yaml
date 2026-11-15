@@ -1,0 +1,43 @@
+# Swarm Brain configuration. No secrets here: keys are read from environment variables.
+
+limits:
+  max_concurrency: 3          # LLM requests in flight at the same time (whole process)
+  requests_per_minute: 30     # every HTTP attempt counts, retries included
+  max_calls_per_run: 25       # LLM calls one run may make; beyond this the run stops with an error
+  max_tokens_per_call: 1024   # upper bound for any agent's max_tokens
+  max_retries: 5              # retries after the first attempt, on 429 / network / 5xx
+  retry_base_seconds: 2       # backoff: 2, 4, 8, ... seconds (plus jitter)
+  retry_max_seconds: 30
+  request_timeout_seconds: 90
+
+# Values every agent starts from. Any agent below can override any of them.
+defaults:
+  provider: nvidia                                # label only; any OpenAI-compatible endpoint works
+  base_url: https://integrate.api.nvidia.com/v1
+  api_key_env: NVIDIA_API_KEY                     # NAME of the environment variable holding the key
+  model: ""                                       # REQUIRED: run `python list_models.py` and paste an id here
+  temperature: 0.4
+  max_tokens: 800
+
+# The orchestrator is plain code and calls no model, so it has no entry here.
+agents:
+  planner:
+    temperature: 0.2
+    max_tokens: 700
+  researcher:
+    temperature: 0.5
+  memory:
+    temperature: 0.2
+    max_tokens: 600
+  executor:
+    temperature: 0.6
+    max_tokens: 1024
+  critic:
+    temperature: 0.2
+    max_tokens: 500
+  # Example: a different endpoint and model for one agent only
+  # critic:
+  #   provider: other
+  #   base_url: https://example.com/v1
+  #   api_key_env: OTHER_API_KEY
+  #   model: some-model-id
