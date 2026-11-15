@@ -1,6 +1,6 @@
 // "Dentro un LLM" / "Inside an LLM": runs the tiny model in the browser and shows every number
 // of the computation. Italian or English: ?lang=it|en, otherwise the browser language.
-import { loadModel, forward, softmax, sample } from './gpt.js';
+import { loadModel, forward, softmax, sample } from './transformer.js';
 import { LLMScene } from './scene.js';
 import { buildTour } from './tour.js';
 import { pickLang, TEXT } from './i18n.js';
@@ -31,7 +31,19 @@ $('back').textContent = LINKS.back[lang].text;
 $('lang-switch').textContent = other.toUpperCase();
 $('lang-switch').hreflang = other;
 
-const model = await loadModel('model.json');
+/** Replace the empty page with a message saying why it could not start. */
+function fail(text) {
+  $('boot-error-text').textContent = text;
+  $('boot-error').hidden = false;
+  throw new Error(text);
+}
+
+let model;
+try {
+  model = await loadModel('model.json');
+} catch {
+  fail(T.loadError);
+}
 const { vocab, block } = model.config;
 const maxLetters = block - 1;                       // the first position is the start mark
 const show = (i) => (i === 0 ? '·' : vocab[i]);     // how a vocabulary entry is written on screen
@@ -40,7 +52,12 @@ const vocabLetters = [...vocab].map((_, i) => show(i));
 $('model-info').textContent = T.modelInfo(model.info.params.toLocaleString(T.locale), model.config.n_layer);
 $('word').maxLength = maxLetters;
 
-const scene = new LLMScene($('scene'), $('labels'), model.config, T.scene);
+let scene;
+try {
+  scene = new LLMScene($('scene'), $('labels'), model.config, T.scene);
+} catch {
+  fail(T.webglError);
+}
 const tour = buildTour(model.config, model.info, lang);
 
 const state = {

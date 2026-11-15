@@ -75,6 +75,13 @@
 #temp-out { color: var(--cyan); }
 #temp { width: 110px; accent-color: var(--cyan); }
 
+/* ---------- start-up error ---------- */
+
+#boot-error { position: fixed; z-index: 10; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(520px, calc(100vw - 32px)); }
+#boot-error[hidden] { display: none; }
+#boot-error .ptitle { color: var(--red); }
+#boot-error p { margin: 0; padding: 12px 14px; font-size: 13px; line-height: 1.55; }
+
 /* ---------- labels and tooltip ---------- */
 
 .lane {

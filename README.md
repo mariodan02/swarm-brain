@@ -125,11 +125,13 @@ the model complete it, one letter at a time.
 - The model works on letters and was trained on the 12,338 distinct words of Dante's *Divine
   Comedy* (Project Gutenberg edition, public domain). It invents words that sound like Dante's
   Italian; it does not know what they mean.
-- Every cube is a number that is really computed: `frontend/llm/gpt.js` does the same arithmetic as
+- Every cube is a number that is really computed: `frontend/llm/transformer.js` does the same arithmetic as
   PyTorch (largest difference on the scores: 5.5e-6, checked against the test vector in `model.json`).
 - To retrain it: instructions at the top of `tools/train_tiny_gpt.py` (needs `torch`, about 3 minutes on a CPU).
 - `?lang=en|it` picks the language (default: the browser's), `?step=N` opens the guide at step N
   (from 0), `?vertical=1` forces the 9:16 layout.
+- Do not name a script `gpt.js`: EasyList, the default ad-block list, blocks every `/gpt.js` script
+  (it is the name of Google's ad tag), and the whole page then fails to start.
 - It is a static page. `tools/export_llm_page.py <folder>` copies it, with the shared stylesheet,
   into a self-contained folder for another site (this is how the wiki copy is made).
 
@@ -155,7 +157,7 @@ backend/       main.py (API and SSE) · orchestrator.py · agents.py (prompts) �
                events.py (schema and bus) · simulator.py (MODE=simulated) · config.yaml
 frontend/      index.html · main.js · brain.js (3D brain) · hud.js (panels) · analogies.js
                localsim.js (in-browser simulator) · style.css
-frontend/llm/  index.html · main.js · gpt.js (the model) · scene.js (3D) · tour.js (guide texts)
+frontend/llm/  index.html · main.js · transformer.js (the model) · scene.js (3D) · tour.js (guide texts)
                i18n.js (interface words) · links.js · model.json (weights) · llm.css
 tools/         train_tiny_gpt.py · export_llm_page.py
 list_models.py · .env.example

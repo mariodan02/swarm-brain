@@ -25,6 +25,8 @@ export const TEXT = {
     ended: 'parola finita',
     full: 'lunghezza massima',
     end: 'fine',
+    loadError: 'Non riesco a scaricare i pesi del modello (model.json). Ricarica la pagina.',
+    webglError: 'Questo browser non riesce a creare un contesto WebGL, che serve per la grafica 3D. Prova ad attivare l’accelerazione hardware o un altro browser.',
     q: (s) => `«${s}»`,
     tip: {
       looks: (a, b) => `${a} guarda ${b}`,
@@ -72,6 +74,8 @@ export const TEXT = {
     ended: 'word finished',
     full: 'maximum length',
     end: 'end',
+    loadError: 'Could not download the model weights (model.json). Reload the page.',
+    webglError: 'This browser cannot create a WebGL context, which the 3D view needs. Try turning on hardware acceleration or another browser.',
     q: (s) => `“${s}”`,
     tip: {
       looks: (a, b) => `${a} looks at ${b}`,

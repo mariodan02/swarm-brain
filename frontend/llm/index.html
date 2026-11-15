@@ -60,6 +60,13 @@
     </form>
   </div>
 
-  <script type="module" src="main.js"></script>
+  <!-- Shown when the page cannot start: main.js fills in the reason, or the script itself failed
+       to load (onerror below), for example because an extension blocked it. -->
+  <div id="boot-error" class="panel" hidden>
+    <div class="ptitle">errore · error</div>
+    <p id="boot-error-text">La pagina non è riuscita a partire: un blocco pubblicità o un’altra estensione potrebbe bloccare uno dei suoi script. Prova a disattivarlo per questo sito e ricarica.<br><br>The page could not start: an ad blocker or another extension may be blocking one of its scripts. Try disabling it for this site and reload.</p>
+  </div>
+
+  <script type="module" src="main.js" onerror="document.getElementById('boot-error').hidden = false"></script>
 </body>
 </html>

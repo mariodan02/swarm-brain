@@ -14,7 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PAGE = ROOT / "frontend" / "llm"
-FILES = ["index.html", "llm.css", "main.js", "gpt.js", "scene.js", "tour.js", "i18n.js", "model.json"]
+FILES = ["index.html", "llm.css", "main.js", "transformer.js", "scene.js", "tour.js", "i18n.js", "model.json"]
 
 WIKI_LINKS = """// Written by tools/export_llm_page.py for the wiki copy of the page.
 export const LINKS = {
