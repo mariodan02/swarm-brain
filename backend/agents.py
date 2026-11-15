@@ -62,7 +62,7 @@ AGENTS: dict[str, Agent] = {
         ),
         Agent(
             "critic",
-            "lobo occipitale",
+            "corteccia cingolata anteriore",
             "Sei il critic di uno sciame di agenti. Controlla la bozza rispetto all'obiettivo: errori, "
             "contraddizioni, affermazioni non sostenute dal materiale, parti mancanti. "
             "La prima riga della risposta è esattamente 'VERDETTO: OK' oppure 'VERDETTO: RIVEDERE'. "

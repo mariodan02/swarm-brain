@@ -49,11 +49,11 @@ export const ANALOGIES = {
     wiki: null,
   },
   critic: {
-    fit: 'debole',
+    fit: 'buona',
     does: 'Rilegge la bozza, cerca errori e parti mancanti, e dà un verdetto: va bene oppure va rivista.',
-    brain: 'Il lobo occipitale elabora la vista: forme, colori, movimento.',
-    holds: 'Solo come immagine: il critic è l’occhio che riguarda il lavoro.',
-    breaks: 'Il lobo occipitale vede, non giudica. Nel cervello accorgersi degli errori è legato soprattutto a un’altra zona, la corteccia cingolata anteriore, nella parte interna del lobo frontale.',
+    brain: 'La corteccia cingolata anteriore sta sulla faccia interna di ogni emisfero, sopra il centro del cervello. Si attiva quando commettiamo un errore o quando due risposte possibili sono in conflitto, e segnala che serve più controllo.',
+    holds: 'In entrambi i casi una parte non produce il lavoro ma lo sorveglia: si accorge che qualcosa non va e fa correggere.',
+    breaks: 'Il critic legge la bozza solo alla fine, una volta. La cingolata anteriore controlla di continuo, in frazioni di secondo, e ha anche altri compiti, legati al dolore e alle emozioni.',
     wiki: null,
   },
   orchestrator: {

@@ -10,8 +10,8 @@ e ogni loro azione diventa un evento che anima il cervello nel browser.
 | `researcher` | lobo parietale | raccoglie ciò che il modello sa sul tema |
 | `memory` | lobo temporale | riassume i risultati in un contesto condiviso |
 | `executor` | corteccia motoria | scrive il risultato e lo rivede se serve |
-| `critic` | lobo occipitale | controlla la bozza e dà un verdetto |
-| `orchestrator` | centro | smista il lavoro; è codice, non chiama modelli |
+| `critic` | corteccia cingolata anteriore | controlla la bozza e dà un verdetto |
+| `orchestrator` | talamo (centro) | smista il lavoro; è codice, non chiama modelli |
 
 ## Avvio rapido (simulato, senza chiavi)
 

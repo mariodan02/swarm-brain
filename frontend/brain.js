@@ -15,11 +15,11 @@ export const AGENTS = [
   { id: 'researcher',   region: 'lobo parietale',    anchor: [0.34, 0.50, -0.22],  label: [0.62, 0.80, -0.36] },
   { id: 'memory',       region: 'lobo temporale',    anchor: [0.69, -0.24, 0.12],  label: [1.02, -0.40, 0.26] },
   { id: 'executor',     region: 'corteccia motoria', anchor: [-0.36, 0.49, 0.18],  label: [-0.66, 0.78, 0.26] },
-  { id: 'critic',       region: 'lobo occipitale',   anchor: [-0.26, 0.20, -0.80], label: [-0.46, 0.34, -1.08] },
-  { id: 'orchestrator', region: 'nucleo centrale',   anchor: [0.0, -0.05, -0.02],  label: [-0.72, -0.70, 0.40] },
+  { id: 'critic',       region: 'cingolata anteriore', anchor: [0.0, 0.21, 0.38], label: [0.08, 0.92, 0.50] },
+  { id: 'orchestrator', region: 'talamo',            anchor: [0.0, -0.05, -0.04],  label: [-0.72, -0.70, 0.40] },
 ];
 
-const NEUTRAL = 6;          // cerebellum and brainstem: no agent
+const NEUTRAL = 6;          // occipital lobe, cerebellum and brainstem: no agent
 const REGIONS = 7;
 const FOV = 40;
 const TARGET = new THREE.Vector3(0, -0.12, 0);
@@ -49,7 +49,7 @@ function regionOf(x, y, z, f) {
   if (zz > 0.30) return 0;   // frontal
   if (zz > 0.04) return 3;   // motor strip
   if (zz > -0.42) return 1;  // parietal
-  return 4;                  // occipital
+  return NEUTRAL;            // occipital: vision, no agent works like it
 }
 
 function buildBrainGeometry() {
@@ -110,11 +110,23 @@ function buildBrainGeometry() {
     push(Math.cos(a) * r, -0.35 - 0.60 * t, -0.18 - 0.12 * t + Math.sin(a) * r, NEUTRAL, 0.45);
   }
 
-  // Orchestrator: dense core at the centre, visible through the cortex (additive blending).
+  // Critic: anterior cingulate cortex, a band on the inner face of each hemisphere that arcs
+  // over the middle of the brain, from below the front (subgenual part) to the top.
+  for (let i = 0; i < 2200; i++) {
+    const side = i % 2 ? 1 : -1;
+    const a = THREE.MathUtils.degToRad(-50 + 150 * rnd());
+    const r = 0.07 * rnd();                       // thickness, outward from the arc
+    const z = 0.04 + (0.44 + r) * Math.cos(a), y = 0.04 + (0.26 + r) * Math.sin(a);
+    push(side * (0.03 + 0.06 * rnd()), y, z, 4, 0.55 + 0.4 * rnd());
+  }
+
+  // Orchestrator: thalamus, two egg-shaped nuclei on either side of the midline, visible through
+  // the cortex (additive blending).
   for (let i = 0; i < 2500; i++) {
+    const side = i % 2 ? 1 : -1;
     const [dx, dy, dz] = dir();
     const s = Math.cbrt(rnd());
-    push(dx * 0.20 * s, -0.05 + dy * 0.16 * s, -0.02 + dz * 0.26 * s, 5, 0.9);
+    push(side * 0.085 + dx * 0.085 * s, -0.05 + dy * 0.12 * s, -0.04 + dz * 0.20 * s, 5, 0.9);
   }
 
   const geo = new THREE.BufferGeometry();
