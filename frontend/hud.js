@@ -56,6 +56,22 @@ export class Hud {
     }
   }
 
+  /**
+   * Make the event log collapsible.
+   * @param {boolean} collapsed initial state
+   * @param {() => void} cb called after every change (the layout has to be measured again)
+   */
+  setupLogToggle(collapsed, cb) {
+    const apply = (value) => {
+      document.body.classList.toggle('log-collapsed', value);
+      $('log-toggle').setAttribute('aria-expanded', String(!value));
+      $('log-toggle').textContent = value ? '▸' : '▾';
+      cb();
+    };
+    $('log-toggle').addEventListener('click', () => apply(!document.body.classList.contains('log-collapsed')));
+    apply(collapsed);
+  }
+
   /** @param {() => void} cb */
   onWhy(cb) { $('why').addEventListener('click', cb); }
 

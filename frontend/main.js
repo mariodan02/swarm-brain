@@ -57,6 +57,8 @@ function showAgentInfo(agent) {
 }
 hud.onAgentSelect(showAgentInfo);
 brain.onSelect = showAgentInfo;
+// On a phone the log starts closed: it would take most of the screen. ?vertical=1 (recording) keeps it open.
+hud.setupLogToggle(window.innerWidth < 600 && !vertical, layout);
 hud.onWhy(() => hud.showInfo(WHY.title, WHY.paragraphs.map((text) => ({ text })), { wiki: WHY.wiki }));
 
 // ---------- run state ----------
