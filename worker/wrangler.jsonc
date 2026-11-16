@@ -7,13 +7,13 @@
   "workers_dev": false,
   "routes": [{ "pattern": "swarm-api.daniellomario.com", "custom_domain": true }],
   // Counters for the daily cap and the per-visitor limit.
-  "kv_namespaces": [{ "binding": "LIMITS", "id": "REPLACE_WITH_KV_NAMESPACE_ID" }],
+  "kv_namespaces": [{ "binding": "LIMITS", "id": "6b63bc14653342d5a3a1202c21c2e993" }],
   "vars": {
     // Pages allowed to start a run (comma separated origins).
     "ALLOWED_ORIGINS": "https://wiki.daniellomario.com",
     "DAILY_RUNS": "50",              // real runs per day, all visitors together (Europe/Rome day)
     "IP_RUNS_PER_HOUR": "3",         // real runs per visitor per hour
-    "TURNSTILE_SITEKEY": "REPLACE_WITH_TURNSTILE_SITEKEY",   // public by design
+    "TURNSTILE_SITEKEY": "0x4AAAAAAGDDgeKI5uETpkI4",   // public by design
     "BASE_URL": "https://integrate.api.nvidia.com/v1",
     "MODEL": "nvidia/nemotron-3.5-lightning-30b-a3b",
     // Sent as it is in every model request: switches off this model's reasoning.
