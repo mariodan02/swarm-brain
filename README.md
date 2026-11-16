@@ -151,6 +151,7 @@ the model complete it, one letter at a time.
 
 - `tool_call`: a model call, with `payload.phase` = `start`, `end` (plus `payload.tokens`) or `failed`.
 - `error`: `payload.fatal` = `true` ends the run; `false` is an attempt that will be retried.
+- Labels longer than 80 characters are cut, and the whole text (up to 300) is in `payload.full_label`; the log shows that.
 - `final`: `payload.result` is the final text; `payload.simulated` tells whether it is a placeholder.
 
 Other routes: `POST /task` (`{"goal": "…"}`; 409 if a task is already running), `GET /status`.

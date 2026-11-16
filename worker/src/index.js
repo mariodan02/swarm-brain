@@ -7,6 +7,7 @@ import { Slots } from './llm.js';
 import { runGoal } from './orchestrator.js';
 
 const LABEL_MAX = 80;
+const FULL_LABEL_MAX = 300; // a label cut at LABEL_MAX keeps its full text in payload.full_label
 const GOAL_MIN = 3, GOAL_MAX = 400;
 
 const json = (data, status, cors) => new Response(JSON.stringify(data), {
@@ -74,6 +75,7 @@ function stream(env, ctx, goal, cors) {
   const abort = new AbortController(); // the visitor left: stop calling the model
   const write = (text) => writer.write(encoder.encode(text)).catch(() => abort.abort());
   const emit = (type, agent, label, { target = null, payload = {} } = {}) => {
+    if (label.length > LABEL_MAX) payload = { full_label: label.slice(0, FULL_LABEL_MAX), ...payload };
     write(`data: ${JSON.stringify({ id: crypto.randomUUID(), ts: Date.now() / 1000, type, agent, target, label: label.slice(0, LABEL_MAX), payload })}\n\n`);
   };
   const ping = setInterval(() => write(': ping\n\n'), 10000);

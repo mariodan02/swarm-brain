@@ -226,7 +226,8 @@ export class Hud {
     who.textContent = ev.target ? `${ev.agent} → ${ev.target}` : ev.agent;
     const msg = document.createElement('span');
     msg.className = 'msg';
-    msg.textContent = String(ev.label ?? '').slice(0, 80);
+    // label is cut at 80 characters; payload.full_label has the whole text when it was cut
+    msg.textContent = String(ev.payload?.full_label ?? ev.label ?? '');
     li.append(time, who, msg);
     list.appendChild(li);
     while (list.children.length > MAX_LOG_LINES) list.firstChild.remove();

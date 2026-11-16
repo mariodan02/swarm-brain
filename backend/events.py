@@ -11,6 +11,7 @@ from typing import Any, Literal
 EventType = Literal["task_started", "message", "tool_call", "task_done", "error", "final"]
 
 LABEL_MAX = 80
+FULL_LABEL_MAX = 300   # a label cut at LABEL_MAX keeps its full text, up to this length, in payload.full_label
 HISTORY_MAX = 500      # events of the current run kept for clients that connect late
 QUEUE_MAX = 1000       # per-client buffer; a client that falls this far behind loses events
 
@@ -50,7 +51,10 @@ class EventBus:
         payload: dict[str, Any] | None = None,
     ) -> Event:
         """Publish one event now. Never raises and never blocks the caller."""
-        event = Event(type=type, agent=agent, label=label[:LABEL_MAX], target=target, payload=payload or {})
+        payload = dict(payload or {})
+        if len(label) > LABEL_MAX:
+            payload.setdefault("full_label", label[:FULL_LABEL_MAX])
+        event = Event(type=type, agent=agent, label=label[:LABEL_MAX], target=target, payload=payload)
         if len(self._history) < HISTORY_MAX:
             self._history.append(event)
         for queue in self._subscribers:
