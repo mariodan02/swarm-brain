@@ -86,7 +86,7 @@ export async function complete(run, agent, messages, purpose) {
         return { text, truncated: choice?.finish_reason === 'length' };
       }
       await res.body?.cancel();
-      reason = status === 429 ? '429 rate limit' : t(lang, 'http_error', { status });
+      reason = status === 429 ? t(lang, 'busy_model') : t(lang, 'http_error', { status });
       if (status !== 429 && status < 500) break; // 4xx other than 429: retrying will not help
     } catch (err) {
       if (err instanceof AgentFailure) throw err;

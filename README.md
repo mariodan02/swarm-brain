@@ -107,7 +107,7 @@ of the environment variable that holds the key. Restart the backend after a chan
 | `?demo=1` | starts a task right away with the goal in the input box |
 | `?theme=light` | light theme |
 | `?local=1` | uses the in-browser simulator, no backend needed |
-| `?err=1` | with `?local=1`: forces a simulated 429 error |
+| `?err=1` | with `?local=1`: adds one retried call (a busy model), to see how retries look; simulated runs have none otherwise |
 
 For a vertical video: `http://localhost:5173/?vertical=1&demo=1`.
 
@@ -158,7 +158,8 @@ current text on hover, and opens its step on click.
 ```
 
 - `tool_call`: a model call, with `payload.phase` = `start`, `end` (plus `payload.tokens`) or `failed`.
-- `error`: `payload.fatal` = `true` ends the run; `false` is an attempt that will be retried.
+- `error`: `payload.fatal` = `true` ends the run (red in the page); `false` is an attempt that will be
+  retried (grey, no red flash: it is not a failure yet).
 - Labels longer than 80 characters are cut, and the whole text (up to 300) is in `payload.full_label`; the log shows that.
 - `final`: `payload.result` is the final text; `payload.simulated` tells whether it is a placeholder.
 

@@ -19,13 +19,13 @@ const SHAPE = [
  * @param {string} goal
  * @param {(ev: object) => void} emit
  * @param {object} S words of the simulated run (i18n.js, `sim`)
- * @param {{forceError?: boolean}} [opts]
+ * @param {{forceError?: boolean}} [opts] forceError: add one retried call (?err=1), to try out how retries look
  * @returns {() => void} cancel function: after it is called no more events are emitted
  */
 export function runLocalSim(goal, emit, S, opts = {}) {
   let cancelled = false;
   const PLAN = SHAPE.map((t, i) => ({ ...t, title: S.plan[i] }));
-  const withError = opts.forceError || Math.random() < 0.5;
+  const withError = Boolean(opts.forceError);
 
   const send = (type, agent, target, label, payload = {}) => {
     if (cancelled) return;

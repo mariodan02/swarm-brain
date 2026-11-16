@@ -46,12 +46,13 @@ TEXTS: dict[str, dict[str, str]] = {
         "p_revision": "revisione",
         "llm_tokens": "LLM ◂ {n} token",
         "llm_no_usage": "LLM ◂ risposta (token n/d)",
-        "retry": "{reason} · tentativo {attempt}/{total} · riprovo tra {delay} s",
+        "retry": "{reason} · riprovo tra {delay} s (tentativo {attempt} di {total})",
         "call_failed": "Chiamata LLM fallita ({reason})",
         "max_calls": "Limite di {n} chiamate LLM per esecuzione raggiunto",
         "max_tokens": "max_tokens {wanted} oltre il limite di {limit} per chiamata",
         "empty": "Il modello ha restituito una risposta vuota",
         "net_error": "errore di rete",
+        "busy_model": "modello occupato",
         "http_error": "errore HTTP {status}",
         # prompt scaffolding
         "u_goal": "Obiettivo: {goal}",
@@ -73,7 +74,7 @@ TEXTS: dict[str, dict[str, str]] = {
         "sim_t3": "Sintetizza il contesto condiviso",
         "sim_t4": "Scrivi la bozza della risposta",
         "sim_t5": "Controlla qualità e coerenza",
-        "sim_429": "429 rate limit · nuovo tentativo tra 2 s",
+        "sim_429": "modello occupato · riprovo tra 2 s (tentativo 1 di 3)",
         "sim_result": (
             "[SIMULATO] Nessun modello è stato chiamato.\n\n"
             "Obiettivo: {goal}\n\n"
@@ -115,12 +116,13 @@ TEXTS: dict[str, dict[str, str]] = {
         "p_revision": "revision",
         "llm_tokens": "LLM ◂ {n} tokens",
         "llm_no_usage": "LLM ◂ answer (tokens n/a)",
-        "retry": "{reason} · attempt {attempt}/{total} · retrying in {delay} s",
+        "retry": "{reason} · retrying in {delay} s (attempt {attempt} of {total})",
         "call_failed": "LLM call failed ({reason})",
         "max_calls": "Limit of {n} LLM calls per run reached",
         "max_tokens": "max_tokens {wanted} is over the limit of {limit} per call",
         "empty": "The model returned an empty answer",
         "net_error": "network error",
+        "busy_model": "model busy",
         "http_error": "HTTP error {status}",
         "u_goal": "Goal: {goal}",
         "u_overall": "Overall goal: {goal}",
@@ -140,7 +142,7 @@ TEXTS: dict[str, dict[str, str]] = {
         "sim_t3": "Summarize the shared context",
         "sim_t4": "Write the draft answer",
         "sim_t5": "Check quality and consistency",
-        "sim_429": "429 rate limit · retrying in 2 s",
+        "sim_429": "model busy · retrying in 2 s (attempt 1 of 3)",
         "sim_result": (
             "[SIMULATED] No model was called.\n\n"
             "Goal: {goal}\n\n"

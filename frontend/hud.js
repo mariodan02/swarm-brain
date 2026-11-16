@@ -3,6 +3,7 @@
 
 const MAX_LOG_LINES = 200;
 const MIN_TRACK_SPAN = 30; // seconds shown by the activity tracks before they start to compress
+const SENDING_MIN_MS = 900;
 const $ = (id) => document.getElementById(id);
 
 function clock(seconds) {
@@ -128,6 +129,23 @@ export class Hud {
     });
   }
 
+  /**
+   * Light running along the command bar between the click and the first event of the run, so it
+   * is clear the request has left. Shown for at least SENDING_MIN_MS, or a fast start would hide it.
+   */
+  setSending(on) {
+    clearTimeout(this.sendingTimer);
+    const bar = $('cmd');
+    if (on) {
+      this.sendingSince = performance.now();
+      bar.classList.add('sending');
+      return;
+    }
+    const left = SENDING_MIN_MS - (performance.now() - (this.sendingSince ?? 0));
+    if (left <= 0) bar.classList.remove('sending');
+    else this.sendingTimer = setTimeout(() => bar.classList.remove('sending'), left);
+  }
+
   /** Show the SIMULATED badge whenever no real model is being called. */
   setSimulated(on) { $('mode').hidden = !on; }
 
@@ -211,11 +229,12 @@ export class Hud {
     if (seg) this.#close(seg, t);
   }
 
-  markError(agent, t) {
+  /** @param {boolean} [retry] true = a call that will be tried again, drawn grey instead of red */
+  markError(agent, t, retry = false) {
     const track = this.tracks.get(agent);
     if (!track) return;
     const el = document.createElement('i');
-    el.className = 'err';
+    el.className = retry ? 'retry' : 'err';
     track.appendChild(el);
     this.ticks.push({ el, t });
   }
@@ -237,7 +256,8 @@ export class Hud {
   log(ev, t) {
     const list = $('log-list');
     const li = document.createElement('li');
-    li.className = ev.type;
+    // Only errors that stop the run are red; a retry is shown grey, it is not a failure yet.
+    li.className = ev.type === 'error' && !ev.payload?.fatal ? 'retry' : ev.type;
     const time = document.createElement('span');
     time.className = 't';
     time.textContent = clock(t);

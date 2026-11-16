@@ -212,6 +212,7 @@ body.stack #llm-link, body.stack #lang-switch { font-size: 9px; }
 #agent-list .track i { position: absolute; top: 0; bottom: 0; min-width: 2px; background: var(--cyan); opacity: 0.85; }
 #agent-list .track i.open { background: var(--lime); opacity: 1; }
 #agent-list .track i.err { width: 2px; background: var(--red); opacity: 1; z-index: 1; }
+#agent-list .track i.retry { width: 2px; background: var(--dim); opacity: 1; z-index: 1; }
 
 #agent-list li.working { background: rgba(64, 224, 255, 0.07); border-left-color: var(--cyan); }
 #agent-list li.working .dot { background: var(--cyan); box-shadow: 0 0 9px var(--cyan); animation: blink 0.9s ease-in-out infinite; }
@@ -267,11 +268,30 @@ body.stack #llm-link, body.stack #lang-switch { font-size: 9px; }
 #log-list .msg { grid-column: 2; color: var(--text); overflow-wrap: anywhere; }
 #log-list li.task_done .msg, #log-list li.final .msg, #log-list li.final .who { color: var(--lime); }
 #log-list li.error .who, #log-list li.error .msg { color: var(--red); }
+#log-list li.retry .who, #log-list li.retry .msg, #log-list li.note .who { color: var(--dim); }
+#log-list li.note .msg { color: var(--dim); font-style: italic; }
 
 /* ---------- command bar ---------- */
 
 #cmd { display: flex; align-items: center; gap: 10px; padding: 8px 10px; }
 #cmd .prompt { color: var(--lime); font-size: 16px; }
+/* Request sent, first event not yet arrived: a light runs along the bottom edge, the prompt blinks.
+   (::before/::after are taken by the panel's corner brackets, hence a background image.) */
+#cmd.sending {
+  border-color: color-mix(in srgb, var(--cyan) 55%, transparent);
+  background-image: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  background-size: 35% 3px;
+  background-repeat: no-repeat;
+  background-position: -35% 100%;
+  animation: cmd-scan 1.1s linear infinite;
+}
+#cmd.sending .prompt { animation: cmd-blink 0.9s steps(2, jump-none) infinite; }
+@keyframes cmd-scan { to { background-position: 135% 100%; } }
+@keyframes cmd-blink { 50% { opacity: 0.15; } }
+@media (prefers-reduced-motion: reduce) {
+  #cmd.sending { animation: none; background-size: 100% 2px; background-position: 0 100%; }
+  #cmd.sending .prompt { animation: none; }
+}
 #goal {
   flex: 1;
   min-width: 0;

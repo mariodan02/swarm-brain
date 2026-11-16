@@ -126,6 +126,7 @@ function beginRun(ev) {
   hud.hideFinal();
   hud.setCounters(0, 0);
   hud.setRunning(true);
+  hud.setSending(false);
   // When the page joins a run already in progress the timer starts from the time already spent.
   hud.startTimer(Math.max(0, Date.now() / 1000 - clockSkew - ev.ts));
 }
@@ -133,6 +134,7 @@ function beginRun(ev) {
 function endRun(t) {
   hud.stopTimer(t);
   hud.setRunning(false);
+  hud.setSending(false);
 }
 
 /** Single entry point for every event, whatever its source. */
@@ -180,16 +182,14 @@ function handleEvent(ev) {
       break;
 
     case 'error':
-      hud.markError(ev.agent, t);
+      hud.markError(ev.agent, t, !payload.fatal);
       if (payload.fatal) {
         for (const [agent, n] of run.active) if (n > 0 && agent !== ev.agent) setState(agent, 'idle');
         run.active.clear();
         setState(ev.agent, 'error');
         endRun(t);
-      } else if (fresh) {
-        brain.flashError(ev.agent);
-        hud.flashAgent(ev.agent);
       }
+      // A retry (not fatal) gets no red flash: the call is simply tried again.
       break;
 
     case 'final':
@@ -203,7 +203,7 @@ function handleEvent(ev) {
 
 /** A line in the log written by the page itself (not an agent event). */
 function uiNote(label) {
-  hud.log({ type: 'error', agent: 'ui', target: null, label }, hud.elapsed());
+  hud.log({ type: 'note', agent: 'ui', target: null, label }, hud.elapsed());
 }
 
 // ---------- event sources ----------
@@ -287,6 +287,7 @@ async function startApi(goal) {
 }
 
 async function start(goal) {
+  hud.setSending(true);
   if (source === 'local') return startLocal(goal);
   if (source === 'api') return startApi(goal);
   hud.setRunning(true);
@@ -300,10 +301,12 @@ async function start(goal) {
       const body = await res.json().catch(() => ({}));
       uiNote(T.note.refusedWhy(res.status, typeof body.detail === 'string' ? body.detail : T.note.invalid));
       if (res.status !== 409) hud.setRunning(false);
+      hud.setSending(false);
     }
   } catch {
     uiNote(T.note.backendDown);
     hud.setRunning(false);
+    hud.setSending(false);
   }
 }
 

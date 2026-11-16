@@ -209,7 +209,7 @@ def _retryable(exc: BaseException) -> bool:
 
 def _reason(exc: BaseException | None, lang: str) -> tuple[str, int | None]:
     if isinstance(exc, openai.RateLimitError):
-        return "429 rate limit", 429
+        return t(lang, "busy_model"), 429
     if isinstance(exc, openai.APITimeoutError):
         return "timeout", None
     if isinstance(exc, openai.APIConnectionError):

@@ -29,9 +29,11 @@ def make_plan(lang: str) -> list[SimTask]:
     ]
 
 
-async def run_simulation(goal: str, bus: EventBus, lang: str = "it") -> None:
-    """Emit the events of one fake run. Every payload that could be mistaken for real is marked."""
-    with_error = random.random() < 0.5
+async def run_simulation(goal: str, bus: EventBus, lang: str = "it", with_error: bool = False) -> None:
+    """Emit the events of one fake run. Every payload that could be mistaken for real is marked.
+
+    with_error: add one retried call (a busy model), to try out how retries look.
+    """
     plan = make_plan(lang)
 
     async def llm(agent: str, what: str, *, retry_once: bool = False) -> None:
