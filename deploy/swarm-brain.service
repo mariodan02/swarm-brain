@@ -1,0 +1,26 @@
+# systemd unit for the local backend on the VPS: starts at boot, restarts if it crashes.
+# MODE and the API key come from .env (load_dotenv in backend/main.py). Listens on 127.0.0.1 only:
+# open it from another machine with  ssh -N -L 5173:127.0.0.1:5173 <user>@<host>
+#
+# Install:  sudo cp deploy/swarm-brain.service /etc/systemd/system/
+#           sudo systemctl daemon-reload && sudo systemctl enable --now swarm-brain
+# Logs:     journalctl -u swarm-brain -f
+# After a change to the backend or to config.yaml:  sudo systemctl restart swarm-brain
+
+[Unit]
+Description=Swarm Brain backend (FastAPI + SSE)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/dev/swarm-brain
+ExecStart=/home/ubuntu/dev/swarm-brain/.venv/bin/uvicorn backend.main:app --host 127.0.0.1 --port 5173 --timeout-graceful-shutdown 2
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

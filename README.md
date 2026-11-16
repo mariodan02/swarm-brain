@@ -37,6 +37,10 @@ If the backend runs on a remote server, forward the port from your computer:
 ssh -N -L 5173:127.0.0.1:5173 user@server
 ```
 
+To keep it running on a server across reboots, `deploy/swarm-brain.service` is a systemd unit
+(install and log commands are at the top of the file; adjust `User` and the paths). It reads `MODE`
+and the key from `.env`, and it has to be restarted after a change to the backend or to `config.yaml`.
+
 ## Real agents (NVIDIA or any OpenAI-compatible endpoint)
 
 1. Create the environment file and add your key:
@@ -170,5 +174,6 @@ frontend/llm/  index.html · main.js · transformer.js (the model) · scene.js (
                tour.js (guide texts)
                i18n.js (interface words) · links.js · model.json (weights) · llm.css
 tools/         train_tiny_gpt.py · export_llm_page.py · export_brain_page.py
+deploy/        swarm-brain.service (systemd unit for a server)
 list_models.py · .env.example
 ```
