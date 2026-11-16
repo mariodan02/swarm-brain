@@ -209,7 +209,9 @@ async function start(goal) {
 }
 
 async function init() {
-  if (params.get('local') !== '1') {
+  // A static copy (data-static on <html>, set by tools/export_brain_page.py) has no backend.
+  const isStatic = 'static' in document.documentElement.dataset;
+  if (params.get('local') !== '1' && !isStatic) {
     try {
       const res = await fetch('/status', { cache: 'no-store' });
       if (res.ok) {

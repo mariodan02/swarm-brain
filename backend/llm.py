@@ -47,6 +47,9 @@ class AgentConfig:
     model: str
     temperature: float
     max_tokens: int
+    # Extra fields sent as they are in the request body, for provider-specific options
+    # (for example switching off a model's reasoning). None = nothing extra.
+    extra_body: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -91,6 +94,10 @@ def _build(cls: type, raw: dict[str, Any], where: str) -> Any:
         try:
             if kind == "str":
                 if not isinstance(value, str):
+                    raise TypeError
+                values[key] = value
+            elif kind.startswith("dict"):
+                if value is not None and not isinstance(value, dict):
                     raise TypeError
                 values[key] = value
             elif kind == "int":
@@ -310,6 +317,7 @@ class LLMGateway:
                             messages=messages,  # type: ignore[arg-type]
                             temperature=cfg.temperature,
                             max_tokens=wanted,
+                            extra_body=cfg.extra_body,
                         )
         except openai.OpenAIError as exc:
             reason, status = _reason(exc)

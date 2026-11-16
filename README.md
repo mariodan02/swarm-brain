@@ -53,7 +53,10 @@ ssh -N -L 5173:127.0.0.1:5173 user@server
    .venv/bin/python list_models.py llama    # only ids containing "llama"
    ```
 
-3. Paste the id into `defaults.model` in `backend/config.yaml`.
+3. Paste the id into `defaults.model` in `backend/config.yaml`. The file ships with
+   `nvidia/nemotron-3.5-lightning-30b-a3b`, which answered in 1–3 seconds per call when tested;
+   many ids in the list answer 404 or time out on the free tier. For a model that reasons before
+   answering, `extra_body` can switch the reasoning off (see the comment in the file).
 
 4. Try a single call, then start the server:
 
@@ -111,8 +114,9 @@ links to the matching section of the wiki entry
 [Sciame di agenti](https://wiki.daniellomario.com/it/agent-swarm) (English version:
 [Agent swarm](https://wiki.daniellomario.com/agent-swarm)), which explains the analogies with sources.
 
-The frontend also works on its own as a static page (`?local=1`), so it can be published inside
-another site without the backend.
+The frontend also works on its own as a static page with the in-browser simulator (`?local=1`).
+`tools/export_brain_page.py <folder>` makes such a copy; one is published at
+<https://wiki.daniellomario.com/lab/swarm-brain/>.
 
 ## Inside an LLM (`/llm/`)
 
@@ -159,6 +163,6 @@ frontend/      index.html · main.js · brain.js (3D brain) · hud.js (panels) �
                localsim.js (in-browser simulator) · style.css
 frontend/llm/  index.html · main.js · transformer.js (the model) · scene.js (3D) · tour.js (guide texts)
                i18n.js (interface words) · links.js · model.json (weights) · llm.css
-tools/         train_tiny_gpt.py · export_llm_page.py
+tools/         train_tiny_gpt.py · export_llm_page.py · export_brain_page.py
 list_models.py · .env.example
 ```

@@ -15,7 +15,14 @@ defaults:
   provider: nvidia                                # label only; any OpenAI-compatible endpoint works
   base_url: https://integrate.api.nvidia.com/v1
   api_key_env: NVIDIA_API_KEY                     # NAME of the environment variable holding the key
-  model: ""                                       # REQUIRED: run `python list_models.py` and paste an id here
+  # Chosen on 2026-11-15 among the models of the free NVIDIA tier: fast (1-6 s per call) and good
+  # Italian. Run `python list_models.py` to see the others; many listed ids answer 404 or time out.
+  model: nvidia/nemotron-3.5-lightning-30b-a3b
+  # This model reasons before answering by default: the reasoning uses up max_tokens and the answer
+  # comes back empty. This switches it off. Remove it for models that do not reason.
+  extra_body:
+    chat_template_kwargs:
+      enable_thinking: false
   temperature: 0.4
   max_tokens: 800
 
