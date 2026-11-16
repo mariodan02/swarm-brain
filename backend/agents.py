@@ -36,7 +36,8 @@ AGENTS: dict[str, Agent] = {
             "- executor: scrive il risultato finale richiesto dall'obiettivo\n"
             "Regole: l'ultimo sotto-compito è dell'executor e produce il risultato finale; "
             "usa depends_on per indicare da quali sotto-compiti serve il risultato; "
-            "i sotto-compiti senza dipendenze tra loro vengono eseguiti in parallelo.\n"
+            "i sotto-compiti senza dipendenze tra loro vengono eseguiti in parallelo; "
+            "scrivi il testo dei sotto-compiti nella lingua dell'obiettivo.\n"
             "Rispondi SOLO con JSON valido, senza testo attorno, in questa forma:\n"
             '{"subtasks": [{"id": "t1", "agent": "researcher", "task": "...", "depends_on": []}]}',
         ),

@@ -1,0 +1,23 @@
+// Cloudflare Worker that runs the agents for the public copy of Swarm Brain.
+// Secrets (never in this file): NVIDIA_API_KEY, TURNSTILE_SECRET. See worker/README.md.
+{
+  "name": "swarm-brain-api",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": false,
+  "routes": [{ "pattern": "swarm-api.daniellomario.com", "custom_domain": true }],
+  // Counters for the daily cap and the per-visitor limit.
+  "kv_namespaces": [{ "binding": "LIMITS", "id": "REPLACE_WITH_KV_NAMESPACE_ID" }],
+  "vars": {
+    // Pages allowed to start a run (comma separated origins).
+    "ALLOWED_ORIGINS": "https://wiki.daniellomario.com",
+    "DAILY_RUNS": "50",              // real runs per day, all visitors together (Europe/Rome day)
+    "IP_RUNS_PER_HOUR": "3",         // real runs per visitor per hour
+    "TURNSTILE_SITEKEY": "REPLACE_WITH_TURNSTILE_SITEKEY",   // public by design
+    "BASE_URL": "https://integrate.api.nvidia.com/v1",
+    "MODEL": "nvidia/nemotron-3.5-lightning-30b-a3b",
+    // Sent as it is in every model request: switches off this model's reasoning.
+    "EXTRA_BODY": "{\"chat_template_kwargs\":{\"enable_thinking\":false}}",
+    "MAX_CALLS_PER_RUN": "25"
+  }
+}

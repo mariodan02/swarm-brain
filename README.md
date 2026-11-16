@@ -114,9 +114,10 @@ links to the matching section of the wiki entry
 [Sciame di agenti](https://wiki.daniellomario.com/it/agent-swarm) (English version:
 [Agent swarm](https://wiki.daniellomario.com/agent-swarm)), which explains the analogies with sources.
 
-The frontend also works on its own as a static page with the in-browser simulator (`?local=1`).
-`tools/export_brain_page.py <folder>` makes such a copy; one is published at
-<https://wiki.daniellomario.com/lab/swarm-brain/>.
+The frontend also works on its own as a static page. `tools/export_brain_page.py <folder> [api]`
+makes such a copy: with only the in-browser simulator, or, given the address of the Cloudflare
+Worker in [`worker/`](worker/), with real agents behind an anti-bot check and daily limits.
+One copy is published at <https://wiki.daniellomario.com/lab/swarm-brain/>.
 
 ## Inside an LLM (`/llm/`)
 
@@ -160,7 +161,8 @@ Other routes: `POST /task` (`{"goal": "…"}`; 409 if a task is already running)
 backend/       main.py (API and SSE) · orchestrator.py · agents.py (prompts) · llm.py (limits, retries)
                events.py (schema and bus) · simulator.py (MODE=simulated) · config.yaml
 frontend/      index.html · main.js · brain.js (3D brain) · hud.js (panels) · analogies.js
-               localsim.js (in-browser simulator) · style.css
+               localsim.js (in-browser simulator) · turnstile.js · style.css
+worker/        Cloudflare Worker that runs the agents for the public static copy
 frontend/llm/  index.html · main.js · transformer.js (the model) · scene.js (3D) · tour.js (guide texts)
                i18n.js (interface words) · links.js · model.json (weights) · llm.css
 tools/         train_tiny_gpt.py · export_llm_page.py · export_brain_page.py

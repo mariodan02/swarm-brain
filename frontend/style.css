@@ -293,6 +293,9 @@ body.stack #llm-link { font-size: 9px; }
 #go:hover:not(:disabled) { background: var(--cyan); color: var(--ink); box-shadow: 0 0 18px rgba(64, 224, 255, 0.5); }
 #go:disabled { border-color: var(--dim); color: var(--dim); cursor: default; }
 
+/* Anti-bot widget of the public copy: appears only when the visitor has to click. */
+#ts { position: absolute; z-index: 5; left: 50%; bottom: 74px; transform: translateX(-50%); }
+
 /* ---------- final result ---------- */
 
 #final {

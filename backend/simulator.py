@@ -16,10 +16,10 @@ class SimTask(TypedDict):
 
 
 PLAN: list[SimTask] = [
-    {"id": "t1", "agent": "researcher", "deps": [], "title": "Raccogli i trend principali"},
-    {"id": "t2", "agent": "researcher", "deps": [], "title": "Analizza attori e mercato"},
+    {"id": "t1", "agent": "researcher", "deps": [], "title": "Raccogli le informazioni di base"},
+    {"id": "t2", "agent": "researcher", "deps": [], "title": "Approfondisci un secondo aspetto"},
     {"id": "t3", "agent": "memory", "deps": ["t1", "t2"], "title": "Sintetizza il contesto condiviso"},
-    {"id": "t4", "agent": "executor", "deps": ["t3"], "title": "Scrivi la bozza del report"},
+    {"id": "t4", "agent": "executor", "deps": ["t3"], "title": "Scrivi la bozza della risposta"},
     {"id": "t5", "agent": "critic", "deps": ["t4"], "title": "Controlla qualità e coerenza"},
 ]
 MAX_PARALLEL = 3

@@ -2,3 +2,6 @@
 .venv/
 .venv-train/
 __pycache__/
+node_modules/
+worker/.dev.vars
+worker/.wrangler/
