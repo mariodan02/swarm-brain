@@ -10,19 +10,20 @@ import { LINKS } from './links.js';
 export function buildTour(c, info, lang) {
   const n = (v) => v.toLocaleString(lang === 'it' ? 'it-IT' : 'en-US');
   const texts = lang === 'it' ? italian(c, n(info.params), n(info.words)) : english(c, n(info.params), n(info.words));
+  // `id` names the step for the block diagram (diagram.js), which lights up the blocks of each step.
   const steps = [
-    { focus: null, along: true },
-    { focus: ['tok'] },
-    { focus: ['pos', 'x0'] },
-    { focus: ['x0', 'l0.x1', 'l0.x2', 'l1.x1', 'l1.x2'], along: true },
-    { focus: ['l0.ln1'] },
-    { focus: ['l0.q', 'l0.k', 'l0.v'] },
-    { focus: ['l0.att'] },
-    { focus: ['l0.mix', 'l0.aout', 'l0.x1'] },
-    { focus: ['l0.ln2', 'l0.hid', 'l0.mlp', 'l0.x2'] },
-    { focus: ['l1'], along: true },
-    { focus: ['lnf', 'logits', 'probs'] },
-    { focus: ['probs'], link: { href: LINKS.wiki[lang], text: texts.linkText } },
+    { id: 'intro', focus: null, along: true },
+    { id: 'tok', focus: ['tok'] },
+    { id: 'pos', focus: ['pos', 'x0'] },
+    { id: 'res', focus: ['x0', 'l0.x1', 'l0.x2', 'l1.x1', 'l1.x2'], along: true },
+    { id: 'ln', focus: ['l0.ln1'] },
+    { id: 'qkv', focus: ['l0.q', 'l0.k', 'l0.v'] },
+    { id: 'att', focus: ['l0.att'] },
+    { id: 'mix', focus: ['l0.mix', 'l0.aout', 'l0.x1'] },
+    { id: 'mlp', focus: ['l0.ln2', 'l0.hid', 'l0.mlp', 'l0.x2'] },
+    { id: 'layers', focus: ['l1'], along: true },
+    { id: 'logits', focus: ['lnf', 'logits', 'probs'] },
+    { id: 'sample', focus: ['probs'], link: { href: LINKS.wiki[lang], text: texts.linkText } },
   ];
   return steps.map((step, i) => ({ ...step, title: texts.steps[i][0], text: texts.steps[i].slice(1) }));
 }

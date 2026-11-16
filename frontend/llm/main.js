@@ -3,6 +3,7 @@
 import { loadModel, forward, softmax, sample } from './transformer.js';
 import { LLMScene } from './scene.js';
 import { buildTour } from './tour.js';
+import { Diagram } from './diagram.js';
 import { pickLang, TEXT } from './i18n.js';
 import { LINKS } from './links.js';
 
@@ -29,6 +30,8 @@ $('clear').textContent = T.clear;
 $('back').href = LINKS.back[lang].href;
 $('back').textContent = LINKS.back[lang].text;
 $('lang-switch').textContent = other.toUpperCase();
+$('schema-toggle').textContent = T.diagram.toggle;
+$('schema-title').textContent = T.diagram.title;
 $('lang-switch').hreflang = other;
 
 /** Replace the empty page with a message saying why it could not start. */
@@ -59,6 +62,14 @@ try {
   fail(T.webglError);
 }
 const tour = buildTour(model.config, model.info, lang);
+const diagram = new Diagram($('schema-svg'), $('schema-caption'), model.config, T.diagram);
+diagram.stepNumber = (id) => tour.findIndex((s) => s.id === id) + 1;
+diagram.onSelect = (id) => {
+  goTo(tour.findIndex((s) => s.id === id));
+  // On narrow screens the diagram covers the guide: close it so the step can be read.
+  if (document.body.classList.contains('stack')) setSchema(false);
+};
+diagram.onPreview = (focus) => scene.preview(focus);
 
 const state = {
   step: Math.min(tour.length - 1, Math.max(0, Number(params.get('step')) || 0)),
@@ -75,9 +86,11 @@ function layout() {
   document.body.classList.toggle('stack', stack);
   const stage = $('stage').getBoundingClientRect();
   const rect = (id) => $(id).getBoundingClientRect();
+  // On wide screens the diagram sits next to the guide; on narrow ones it covers the scene while open.
+  const leftPanel = $('schema').hidden ? 'guide' : 'schema';
   const free = stack
     ? { left: 0, right: stage.width, top: rect('nextletter').bottom - stage.top, bottom: rect('guide').top - stage.top }
-    : { left: rect('guide').right - stage.left, right: stage.width, top: rect('head').bottom - stage.top, bottom: rect('bar').top - stage.top };
+    : { left: rect(leftPanel).right - stage.left, right: stage.width, top: rect('head').bottom - stage.top, bottom: rect('bar').top - stage.top };
   scene.setViewport(stage.width, stage.height, free);
 }
 
@@ -100,6 +113,9 @@ function run() {
   out.tensors.set('probs', { id: 'probs', rows: 1, cols: vocab.length, data: state.probs });
   scene.setTrace(out.tensors, tokens.map(show), vocabLetters);
   renderTop();
+  diagram.setTokens(tokens.map(show), tokens);
+  const order = [...state.probs.keys()].sort((a, b) => state.probs[b] - state.probs[a]);
+  diagram.setOutput(order.slice(0, 3).map((i) => ({ letter: show(i), p: state.probs[i] })));
   const full = word.length >= maxLetters;
   $('one').disabled = $('auto').disabled = state.ended || full;
   $('ended').hidden = !state.ended && !full;
@@ -163,6 +179,7 @@ function showStep(instant = false) {
   $('step-count').textContent = `${state.step + 1} / ${tour.length}`;
   $('lang-switch').href = `?lang=${other}&step=${state.step}${vertical ? '&vertical=1' : ''}`;
   $('step-title').textContent = step.title;
+  diagram.setStep(step.id);
   const body = $('step-text');
   body.replaceChildren();
   for (const text of step.text) {
@@ -186,11 +203,34 @@ function showStep(instant = false) {
   refocus(instant);
 }
 
-function go(delta) {
-  const next = Math.min(tour.length - 1, Math.max(0, state.step + delta));
+function goTo(index) {
+  const next = Math.min(tour.length - 1, Math.max(0, index));
   if (next === state.step) return;
   state.step = next;
   showStep();
+}
+
+function go(delta) { goTo(state.step + delta); }
+
+// ---------- diagram ----------
+
+const SCHEMA_KEY = 'llm.schema';
+
+function setSchema(open) {
+  $('schema').hidden = !open;
+  $('schema-toggle').setAttribute('aria-pressed', String(open));
+  try { localStorage.setItem(SCHEMA_KEY, open ? '1' : '0'); } catch { /* storage blocked: the choice is not kept */ }
+  layout();
+  refocus();
+}
+
+/** Open by default only where it fits next to the guide; a choice made earlier wins. */
+function schemaAtStart() {
+  let saved = null;
+  try { saved = localStorage.getItem(SCHEMA_KEY); } catch { /* storage blocked */ }
+  const fits = !vertical && window.innerWidth >= 1100;
+  if (saved === null || !fits) return fits && saved !== '0';
+  return saved === '1';
 }
 
 // ---------- hover ----------
@@ -217,6 +257,7 @@ scene.onHover = (hit, x, y) => {
 
 // ---------- wiring ----------
 
+$('schema-toggle').addEventListener('click', () => setSchema($('schema').hidden));
 $('prev').addEventListener('click', () => go(-1));
 $('next').addEventListener('click', () => go(1));
 window.addEventListener('keydown', (e) => {
@@ -256,6 +297,8 @@ $('clear').addEventListener('click', () => {
 
 new ResizeObserver(layout).observe($('stage'));
 window.addEventListener('resize', layout);
+$('schema').hidden = !schemaAtStart();
+$('schema-toggle').setAttribute('aria-pressed', String(!$('schema').hidden));
 layout();
 showTemperature();
 run();

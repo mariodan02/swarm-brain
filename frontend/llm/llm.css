@@ -75,6 +75,36 @@
 #temp-out { color: var(--cyan); }
 #temp { width: 110px; accent-color: var(--cyan); }
 
+/* ---------- block diagram ---------- */
+
+#stage #schema-toggle { padding: 0 0 2px; border: 0; border-bottom: 1px dashed var(--dim); color: var(--dim); font-size: 11px; }
+#stage #schema-toggle:hover, #stage #schema-toggle[aria-pressed="true"] { color: var(--cyan); border-bottom-color: var(--cyan); }
+
+#schema { left: 366px; top: 76px; width: 300px; display: flex; flex-direction: column; max-height: calc(100% - 160px); }
+#schema[hidden] { display: none; }
+#schema-svg { display: block; width: 100%; height: auto; min-height: 0; padding: 8px 6px 4px; box-sizing: border-box; }
+#schema-caption { padding: 7px 12px 10px; min-height: 4.4em; font-size: 11px; line-height: 1.45; color: var(--dim); border-top: 1px solid var(--line); }
+#schema-caption b { color: var(--cyan); font-weight: 400; }
+
+.dg text { font-family: var(--mono); font-size: 10px; fill: var(--text); pointer-events: none; }
+.dg text.small { font-size: 8.5px; fill: var(--dim); }
+.dg text.end { text-anchor: end; }
+.dg .flow, .dg .res, .dg .loop { fill: none; stroke: var(--dim); stroke-width: 1; }
+.dg .loop { stroke-dasharray: 3 3; }
+.dg .tip, .dg .dot { fill: var(--dim); }
+.dg .res.on, .dg .loop.on { stroke: var(--lime); stroke-width: 1.6; }
+.dg .dot.on { fill: var(--lime); }
+.dg .blk { cursor: pointer; outline: none; }
+.dg .blk rect, .dg .blk circle { fill: var(--bg); fill-opacity: 0.6; stroke: var(--line); transition: stroke 0.2s, fill 0.2s; }
+.dg .blk .plus { stroke: var(--text); }
+.dg .blk:hover rect, .dg .blk:hover circle, .dg .blk:focus-visible rect, .dg .blk:focus-visible circle { stroke: var(--lime); }
+.dg .blk.on rect, .dg .blk.on circle { stroke: var(--cyan); fill: var(--cyan); fill-opacity: 0.14; }
+.dg .blk.on text { fill: var(--cyan); }
+.dg .blk.on .plus { stroke: var(--cyan); }
+.dg .blk .frame, .dg .blk.on .frame { fill: none; stroke-dasharray: 3 3; pointer-events: none; }
+.dg .blk.on .frame { stroke: var(--cyan); }
+.dg .blk .hit, .dg .blk.on .hit { fill: transparent; stroke: none; }
+
 /* ---------- start-up error ---------- */
 
 #boot-error { position: fixed; z-index: 10; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(520px, calc(100vw - 32px)); }
@@ -116,6 +146,8 @@
 /* ---------- narrow screens and ?vertical=1 ---------- */
 
 body.stack #head { top: 10px; left: 12px; gap: 10px; }
+body.stack #back, body.stack #lang-switch, body.stack #stage #schema-toggle { font-size: 10px; white-space: nowrap; }
+body.stack .brand .sub { display: none; }
 body.stack .brand h1 { font-size: 14px; }
 body.stack #nextletter { top: 52px; right: 10px; width: 150px; }
 body.stack #guide { left: 10px; right: 10px; top: auto; bottom: 104px; width: auto; max-height: 34%; }
@@ -124,4 +156,7 @@ body.stack #bar { left: 10px; right: 10px; bottom: 10px; flex-wrap: wrap; gap: 6
 body.stack #word { flex-basis: 60%; font-size: 17px; }
 body.stack #stage button { padding: 6px 9px; font-size: 11px; }
 body.stack #temp { width: 80px; }
+body.stack #schema { left: 10px; right: 10px; top: 52px; bottom: 104px; width: auto; max-height: none; z-index: 4; }
+body.stack #schema-svg { flex: 1 1 0; height: 100%; }
+body.stack #schema-caption { min-height: 3em; font-size: 10px; }
 body.vertical #stage { width: auto; aspect-ratio: 9 / 16; max-width: 100vw; }

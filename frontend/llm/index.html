@@ -28,6 +28,7 @@
         <span class="sub" id="model-info">mini-GPT</span>
       </div>
       <a id="back" href="../">← swarm brain</a>
+      <button id="schema-toggle" type="button" aria-pressed="false" aria-controls="schema">schema</button>
       <a id="lang-switch" href="?lang=en" data-router-ignore>EN</a>
     </header>
 
@@ -41,6 +42,12 @@
         <button id="prev" type="button">← indietro</button>
         <button id="next" type="button">avanti →</button>
       </div>
+    </section>
+
+    <section id="schema" class="panel" hidden>
+      <div class="ptitle" id="schema-title">schema del modello</div>
+      <svg id="schema-svg" role="group"></svg>
+      <div id="schema-caption"></div>
     </section>
 
     <aside id="nextletter" class="panel">

@@ -321,6 +321,7 @@ export class LLMScene {
    */
   setFocus(focus, opts = {}) {
     this.focus = focus;
+    this.stepFocus = focus;
     this.lastOpts = opts;
     this.#paint();
     const box = new THREE.Box3();
@@ -346,6 +347,15 @@ export class LLMScene {
     } else {
       this.tween = { t: 0, p0: this.camera.position.clone(), t0: this.controls.target.clone(), p1: position, t1: target };
     }
+  }
+
+  /**
+   * Light up other slabs for a moment, without moving the camera (used by the block diagram).
+   * @param {string[]|null} focus slab ids or id prefixes; null = back to the step set by setFocus
+   */
+  preview(focus) {
+    this.focus = focus ?? this.stepFocus ?? null;
+    this.#paint();
   }
 
   /** Same idea as the brain page: keep the picture centred in the area the panels leave free. */
