@@ -171,6 +171,7 @@ export class LLMScene {
     this.slabs = slabs;
     this.length = length;
     this.T = T;
+    this.labelLayer.classList.toggle('dense', T > 16); // lane letters get smaller when there are many lanes
 
     const m = new THREE.Matrix4();
     let i = 0;

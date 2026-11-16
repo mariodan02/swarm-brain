@@ -4,12 +4,12 @@ import { LINKS } from './links.js';
 
 /**
  * @param {{n_embd: number, n_head: number, n_layer: number, block: number, vocab: string}} c
- * @param {{params: number, words: number}} info
+ * @param {{params: number, verses: number}} info
  * @param {'it'|'en'} lang
  */
 export function buildTour(c, info, lang) {
   const n = (v) => v.toLocaleString(lang === 'it' ? 'it-IT' : 'en-US');
-  const texts = lang === 'it' ? italian(c, n(info.params), n(info.words)) : english(c, n(info.params), n(info.words));
+  const texts = lang === 'it' ? italian(c, n(info.params), n(info.verses)) : english(c, n(info.params), n(info.verses));
   // `id` names the step for the block diagram (diagram.js), which lights up the blocks of each step.
   const steps = [
     { id: 'intro', focus: null, along: true },
@@ -28,20 +28,20 @@ export function buildTour(c, info, lang) {
   return steps.map((step, i) => ({ ...step, title: texts.steps[i][0], text: texts.steps[i].slice(1) }));
 }
 
-function italian(c, params, words) {
+function italian(c, params, verses) {
   return {
     linkText: 'continua nella wiki: inferenza degli LLM ↗',
     steps: [
       [
         'Dentro un LLM',
         `Questo è un modello linguistico vero, solo minuscolo: ${params} parametri contro i miliardi dei modelli che usi di solito. Il calcolo avviene adesso, nel tuo browser.`,
-        `Ha letto le ${words} parole diverse della Divina Commedia e ha imparato un solo compito: data una parola iniziata, indovinare la lettera che viene dopo.`,
+        `Ha letto ${verses} versi della Divina Commedia e ha imparato un solo compito: dato l’inizio di un verso, indovinare la lettera che viene dopo. Anche lo spazio tra le parole conta come una lettera.`,
         'Ogni cubetto è un numero. Verde è positivo, azzurro è negativo, più alto e luminoso vuol dire più grande. Passa il mouse su un cubetto per leggerlo.',
-        'Non conosce il significato delle parole: ne ha imparato solo il suono. Per questo ne inventa di nuove che sembrano di Dante.',
+        'Non conosce il significato di niente: ha imparato solo come suonano le parole e quali tendono a seguirsi. Per questo scrive versi che sembrano di Dante ma non vogliono dire nulla, e spesso inventa parole.',
       ],
       [
         '1 · Lettere che diventano numeri',
-        'Un modello lavora solo con numeri. Il testo viene diviso in pezzi chiamati token: qui un token è una lettera, e il punto segna l’inizio e la fine della parola.',
+        'Un modello lavora solo con numeri. Il testo viene diviso in pezzi chiamati token: qui un token è una lettera o uno spazio (␣), e il punto segna l’inizio e la fine del verso.',
         `Ogni token ha una riga in una tabella imparata durante l’addestramento: ${c.n_embd} numeri, il suo vettore. Lettere usate in modo simile finiscono con vettori simili.`,
         'Nei modelli grandi un token è un pezzo di parola e il vocabolario ne contiene decine di migliaia. Il principio è lo stesso.',
       ],
@@ -92,7 +92,7 @@ function italian(c, params, words) {
       ],
       [
         '10 · Un punteggio per ogni lettera',
-        `Alla fine ogni corsia viene trasformata in ${c.vocab.length} punteggi, uno per ogni lettera possibile. Si chiamano logit.`,
+        `Alla fine ogni corsia viene trasformata in ${c.vocab.length} punteggi, uno per ogni token possibile: le lettere, lo spazio e il punto finale. Si chiamano logit.`,
         'Per indovinare la prossima lettera conta solo l’ultima corsia. I suoi punteggi diventano probabilità: le barre alte in fondo.',
         'Il modello quindi non «sceglie una lettera»: dà una probabilità a tutte.',
       ],
@@ -106,20 +106,20 @@ function italian(c, params, words) {
   };
 }
 
-function english(c, params, words) {
+function english(c, params, verses) {
   return {
     linkText: 'continue in the wiki: LLM inference ↗',
     steps: [
       [
         'Inside an LLM',
         `This is a real language model, just a tiny one: ${params} parameters, against the billions of the models you usually use. The computation runs right now, in your browser.`,
-        `It has read the ${words} distinct words of Dante’s Divine Comedy, in Italian, and learned a single task: given the start of a word, guess the next letter.`,
+        `It has read ${verses} verses of Dante’s Divine Comedy, in Italian, and learned a single task: given the start of a verse, guess the next letter. The space between words counts as a letter too.`,
         'Every small cube is a number. Green is positive, blue is negative, and taller and brighter means larger. Hover over a cube to read it.',
-        'It does not know what the words mean: it has only learned how they sound. That is why it invents new words that sound like Dante’s.',
+        'It does not know what anything means: it has only learned how words sound and which ones tend to follow each other. That is why it writes verses that sound like Dante’s but mean nothing, and often invents words.',
       ],
       [
         '1 · Letters become numbers',
-        'A model works only with numbers. The text is split into pieces called tokens: here a token is one letter, and the dot marks the start and the end of a word.',
+        'A model works only with numbers. The text is split into pieces called tokens: here a token is one letter or a space (␣), and the dot marks the start and the end of a verse.',
         `Each token has a row in a table learned during training: ${c.n_embd} numbers, its vector. Letters used in similar ways end up with similar vectors.`,
         'In large models a token is a piece of a word, and the vocabulary holds tens of thousands of them. The principle is the same.',
       ],
@@ -170,7 +170,7 @@ function english(c, params, words) {
       ],
       [
         '10 · A score for each letter',
-        `At the end each lane is turned into ${c.vocab.length} scores, one for every possible letter. They are called logits.`,
+        `At the end each lane is turned into ${c.vocab.length} scores, one for every possible token: the letters, the space and the end mark. They are called logits.`,
         'To guess the next letter only the last lane counts. Its scores become probabilities: the tall bars at the end.',
         'So the model does not “choose a letter”: it gives a probability to all of them.',
       ],

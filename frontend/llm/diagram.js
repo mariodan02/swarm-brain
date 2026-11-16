@@ -10,6 +10,7 @@ const CX = 118;         // x of the main column
 const SKIP_X = 226;     // x of the residual connections that jump over a block
 const LOOP_X = 254;     // x of the arrow from the output back to the input
 const MAX_OUT = 3;      // next letters shown at the bottom
+const MAX_IN = 12;      // input tokens shown at the top (the ellipsis takes one place when there are more)
 
 function el(tag, attrs, parent) {
   const node = document.createElementNS(NS, tag);
@@ -166,13 +167,18 @@ export class Diagram {
     this.tokens = letters.length;
     const g = this.input;
     g.replaceChildren();
-    const w = 16, gap = 2, total = letters.length * (w + gap) - gap;
+    // A whole verse does not fit: show the last tokens, after an ellipsis standing for the others.
+    const cut = letters.length > MAX_IN;
+    const shown = cut ? letters.slice(-(MAX_IN - 1)) : letters;
+    const shownIds = cut ? ids.slice(-(MAX_IN - 1)) : ids;
+    const w = 16, gap = 2, slots = shown.length + (cut ? 1 : 0), total = slots * (w + gap) - gap;
     const left = CX - total / 2;
-    letters.forEach((letter, i) => {
-      const x = left + i * (w + gap);
+    if (cut) text(g, left + w / 2, 11.5, '…', 'small');
+    shown.forEach((letter, i) => {
+      const x = left + (i + (cut ? 1 : 0)) * (w + gap);
       el('rect', { x, y: 2, width: w, height: 18, rx: 2 }, g);
       text(g, x + w / 2, 11.5, letter);
-      text(g, x + w / 2, 28, ids[i], 'small');
+      text(g, x + w / 2, 28, shownIds[i], 'small');
     });
     this.inputRight = left + total;
     this.#drawLoop();

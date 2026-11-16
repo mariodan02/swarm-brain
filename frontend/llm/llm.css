@@ -45,7 +45,7 @@
 
 #nextletter { right: 14px; top: 14px; width: 190px; }
 #nextlist { list-style: none; margin: 0; padding: 8px 10px; }
-#nextlist li { display: grid; grid-template-columns: 16px 1fr 38px; align-items: center; gap: 8px; padding: 3px 0; }
+#nextlist li { display: grid; grid-template-columns: 30px 1fr 38px; align-items: center; gap: 8px; padding: 3px 0; }
 #nextlist .l { font-size: 15px; color: var(--text); text-align: center; }
 #nextlist .b { height: 6px; background: var(--line); }
 #nextlist .b i { display: block; height: 100%; background: var(--lime); }
@@ -124,6 +124,7 @@
   will-change: transform, opacity;
 }
 .lane.top { color: var(--lime); text-align: center; }
+#labels.dense .lane:not(.top) { font-size: 11px; }
 .lane .s { display: block; font-size: 9px; color: var(--dim); }
 #labels .blabel { pointer-events: none; cursor: default; color: var(--cyan); border-left-color: var(--cyan); }
 #labels .blabel[hidden] { display: none; }

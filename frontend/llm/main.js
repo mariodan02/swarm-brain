@@ -43,13 +43,14 @@ function fail(text) {
 
 let model;
 try {
-  model = await loadModel('model.json');
+  model = await loadModel('model.json?v=verses-1'); // change v when the weights change: no stale cached copy
 } catch {
   fail(T.loadError);
 }
 const { vocab, block } = model.config;
 const maxLetters = block - 1;                       // the first position is the start mark
-const show = (i) => (i === 0 ? '·' : vocab[i]);     // how a vocabulary entry is written on screen
+// How a vocabulary entry is written on screen: the start/end mark as a dot, the space as ␣.
+const show = (i) => (i === 0 ? '·' : vocab[i] === ' ' ? '␣' : vocab[i]);
 const vocabLetters = [...vocab].map((_, i) => show(i));
 
 $('model-info').textContent = T.modelInfo(model.info.params.toLocaleString(T.locale), model.config.n_layer);
@@ -73,7 +74,7 @@ diagram.onPreview = (focus) => scene.preview(focus);
 
 const state = {
   step: Math.min(tour.length - 1, Math.max(0, Number(params.get('step')) || 0)),
-  ended: false,       // the model chose the end mark: the word is complete
+  ended: false,       // the model chose the end mark: the verse is complete
   probs: null,
   picked: -1,         // vocabulary index of the last letter the model chose
   timer: null,
@@ -96,9 +97,13 @@ function layout() {
 
 // ---------- model ----------
 
-/** Keep only a-z (accents removed), at most maxLetters. */
+/**
+ * Same rules as the training text: lower case, accents removed, anything else becomes one space,
+ * no space at the start. A space at the end stays (the user is typing the next word). At most maxLetters.
+ */
 function clean(text) {
-  return text.toLowerCase().normalize('NFD').replace(/[^a-z]/g, '').slice(0, maxLetters);
+  return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z]+/g, ' ').replace(/^ /, '').slice(0, maxLetters);
 }
 
 function temperature() { return Number($('temp').value); }
@@ -131,7 +136,7 @@ function renderTop() {
     if (i === state.picked) li.className = 'picked';
     const letter = document.createElement('span');
     letter.className = 'l';
-    letter.textContent = i === 0 ? T.end : vocab[i];
+    letter.textContent = i === 0 ? T.end : show(i);
     if (i === 0) letter.style.fontSize = '10px';
     const bar = document.createElement('span');
     bar.className = 'b';
@@ -146,7 +151,7 @@ function renderTop() {
   }
 }
 
-/** Draw one letter from the probabilities and append it. Returns false when the word is over. */
+/** Draw one letter from the probabilities and append it. Returns false when the verse is over. */
 function addLetter() {
   if (state.ended || clean($('word').value).length >= maxLetters) return false;
   const choice = sample(state.probs);

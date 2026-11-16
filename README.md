@@ -124,15 +124,17 @@ One copy is published at <https://wiki.daniellomario.com/lab/swarm-brain/>.
 A second page, independent of the backend: <http://localhost:5173/llm/>, also published at
 <https://wiki.daniellomario.com/lab/inside-an-llm/>. It shows in 3D the computation of a real but
 tiny language model (16,080 parameters, 2 layers), run in the browser. A 12-step guide goes from the
-text to the probabilities of the next letter; at the bottom you can type the start of a word and let
-the model complete it, one letter at a time.
+text to the probabilities of the next letter; at the bottom you can type the start of a verse and let
+the model complete it, one letter at a time. A block diagram of the model, drawn the way papers draw
+a GPT, sits next to the guide: each block lights up during its step, shows the tensor shapes for the
+current text on hover, and opens its step on click.
 
-- The model works on letters and was trained on the 12,338 distinct words of Dante's *Divine
-  Comedy* (Project Gutenberg edition, public domain). It invents words that sound like Dante's
-  Italian; it does not know what they mean.
+- The model works on letters and spaces (context: 44 positions) and was trained on 14,206 of the
+  14,233 verses of Dante's *Divine Comedy* (the ones that fit; Project Gutenberg edition, public
+  domain). It writes verses that sound like Dante's Italian; it does not know what they mean.
 - Every cube is a number that is really computed: `frontend/llm/transformer.js` does the same arithmetic as
-  PyTorch (largest difference on the scores: 5.5e-6, checked against the test vector in `model.json`).
-- To retrain it: instructions at the top of `tools/train_tiny_gpt.py` (needs `torch`, about 3 minutes on a CPU).
+  PyTorch (largest difference on the scores: 1.6e-5, checked against the test vector in `model.json`).
+- To retrain it: instructions at the top of `tools/train_tiny_gpt.py` (needs `torch`, about 20 minutes on a 4-core CPU).
 - `?lang=en|it` picks the language (default: the browser's), `?step=N` opens the guide at step N
   (from 0), `?vertical=1` forces the 9:16 layout.
 - Do not name a script `gpt.js`: EasyList, the default ad-block list, blocks every `/gpt.js` script
@@ -164,7 +166,8 @@ backend/       main.py (API and SSE) · orchestrator.py · agents.py (prompts) �
 frontend/      index.html · main.js · brain.js (3D brain) · hud.js (panels) · analogies.js
                localsim.js (in-browser simulator) · turnstile.js · style.css
 worker/        Cloudflare Worker that runs the agents for the public static copy
-frontend/llm/  index.html · main.js · transformer.js (the model) · scene.js (3D) · tour.js (guide texts)
+frontend/llm/  index.html · main.js · transformer.js (the model) · scene.js (3D) · diagram.js (block diagram)
+               tour.js (guide texts)
                i18n.js (interface words) · links.js · model.json (weights) · llm.css
 tools/         train_tiny_gpt.py · export_llm_page.py · export_brain_page.py
 list_models.py · .env.example
