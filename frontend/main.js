@@ -33,7 +33,7 @@ $('llm-link').textContent = T.llmLink;
 for (const id of ['info-close', 'final-close']) $(id).setAttribute('aria-label', T.close);
 $('log-toggle').setAttribute('aria-label', T.logToggle);
 $('goal').placeholder = T.placeholder;
-$('goal').value = T.goal;
+$('goal').value = T.goals[Math.floor(Math.random() * T.goals.length)];
 $('go').textContent = T.start;
 {
   // The switch keeps the other options of the address (?vertical=1, ?local=1, …).
