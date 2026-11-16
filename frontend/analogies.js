@@ -67,7 +67,7 @@ export const ANALOGIES = {
     critic: {
       fit: 'buona',
       does: 'Rilegge la bozza, cerca errori e parti mancanti, e dà un verdetto: va bene oppure va rivista.',
-      brain: 'La corteccia cingolata anteriore sta sulla faccia interna di ogni emisfero, sopra il centro del cervello. Si attiva quando commettiamo un errore o quando due risposte possibili sono in conflitto, e segnala che serve più controllo.',
+      brain: 'La corteccia cingolata anteriore sta sulla faccia interna di ogni emisfero, attorno al corpo calloso (il fascio di fibre che unisce i due emisferi). Si attiva quando commettiamo un errore o quando due risposte possibili sono in conflitto, e segnala che serve più controllo.',
       holds: 'In entrambi i casi una parte non produce il lavoro ma lo sorveglia: si accorge che qualcosa non va e fa correggere.',
       breaks: 'Il critic legge la bozza solo alla fine, una volta. La cingolata anteriore controlla di continuo, in frazioni di secondo, e ha anche altri compiti, legati al dolore e alle emozioni.',
       wiki: 'https://wiki.daniellomario.com/it/agent-swarm#controllare-corteccia-cingolata-anteriore',
@@ -117,7 +117,7 @@ export const ANALOGIES = {
     critic: {
       fit: 'buona',
       does: 'Rereads the draft, looks for mistakes and missing parts, and gives a verdict: fine, or needs revising.',
-      brain: 'The anterior cingulate cortex lies on the inner face of each hemisphere, above the middle of the brain. It becomes active when we make a mistake or when two possible responses conflict, and it signals that more control is needed.',
+      brain: 'The anterior cingulate cortex lies on the inner face of each hemisphere, around the corpus callosum (the bundle of fibres that joins the two hemispheres). It becomes active when we make a mistake or when two possible responses conflict, and it signals that more control is needed.',
       holds: 'In both cases a part does not produce the work but watches over it: it notices that something is wrong and gets it corrected.',
       breaks: 'The critic reads the draft only at the end, once. The anterior cingulate checks all the time, in fractions of a second, and has other jobs too, linked to pain and emotion.',
       wiki: 'https://wiki.daniellomario.com/agent-swarm#checking-anterior-cingulate-cortex',
