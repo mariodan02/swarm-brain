@@ -64,7 +64,8 @@
 
     <div id="ts"></div>
 
-    <form id="cmd" class="panel" autocomplete="off">
+    <!-- onsubmit: a click before main.js has attached its handler must not reload the page -->
+    <form id="cmd" class="panel" autocomplete="off" onsubmit="return false">
       <span class="prompt">&gt;</span>
       <input id="goal" type="text" maxlength="400" spellcheck="false"
              placeholder="Scrivi un obiettivo per lo sciame…"
