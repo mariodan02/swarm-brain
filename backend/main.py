@@ -23,6 +23,7 @@ from backend.events import EventBus
 from backend.llm import CONFIG_PATH, ConfigError, LLMGateway, load_settings
 from backend.orchestrator import Orchestrator
 from backend.simulator import run_simulation
+from backend.texts import Lang, t
 
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
@@ -44,6 +45,7 @@ _gateway: LLMGateway | None = None  # one per process: its limiters are global
 
 class TaskRequest(BaseModel):
     goal: str = Field(min_length=3, max_length=400)
+    lang: Lang = "it"   # language of the page: labels and messages follow it, answers follow the goal
 
 
 def _running() -> bool:
@@ -59,7 +61,7 @@ def _live_gateway() -> LLMGateway:
     return _gateway
 
 
-async def _guard(run: Coroutine[Any, Any, None]) -> None:
+async def _guard(run: Coroutine[Any, Any, None], lang: str) -> None:
     """Run one task; any failure becomes a fatal `error` event instead of killing the stream."""
     try:
         await run
@@ -67,7 +69,7 @@ async def _guard(run: Coroutine[Any, Any, None]) -> None:
         raise
     except Exception as exc:  # noqa: BLE001 - last line of defence for the run
         log.exception("run failed")
-        bus.emit("error", "orchestrator", f"Errore interno: {type(exc).__name__}", payload={"fatal": True})
+        bus.emit("error", "orchestrator", t(lang, "internal_x", name=type(exc).__name__), payload={"fatal": True})
 
 
 @app.get("/status")
@@ -78,21 +80,21 @@ async def status() -> dict[str, Any]:
 @app.post("/task", status_code=202)
 async def start_task(req: TaskRequest) -> dict[str, str]:
     global _run
-    goal = req.goal.strip()
+    goal, lang = req.goal.strip(), req.lang
     if len(goal) < 3:
-        raise HTTPException(422, "Obiettivo troppo corto")
+        raise HTTPException(422, t(lang, "too_short"))
     if _running():
-        raise HTTPException(409, "Un compito è già in corso")
+        raise HTTPException(409, t(lang, "busy"))
     if MODE == "simulated":
-        run = run_simulation(goal, bus)
+        run = run_simulation(goal, bus, lang)
     else:
         try:
-            run = Orchestrator(_live_gateway(), bus).run(goal)
+            run = Orchestrator(_live_gateway(), bus).run(goal, lang)
         except ConfigError as exc:
             # Not ready for real calls: say why, never fall back to fake output.
             raise HTTPException(503, str(exc)) from None
     bus.start_run()
-    _run = asyncio.create_task(_guard(run))
+    _run = asyncio.create_task(_guard(run, lang))
     return {"status": "started", "mode": MODE}
 
 

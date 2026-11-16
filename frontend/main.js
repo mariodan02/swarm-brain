@@ -8,16 +8,46 @@ import { Hud } from './hud.js';
 import { runLocalSim } from './localsim.js';
 import { ANALOGIES, WHY } from './analogies.js';
 import { turnstileToken } from './turnstile.js';
+import { pickLang, TEXT } from './i18n.js';
 
 const params = new URLSearchParams(location.search);
+const lang = pickLang();
+const T = TEXT[lang];
 const vertical = params.get('vertical') === '1';
 const light = params.get('theme') === 'light';
 document.body.classList.toggle('vertical', vertical);
 document.body.classList.toggle('light', light);
 
-const app = document.getElementById('app');
-const brain = new Brain(document.getElementById('scene'), document.getElementById('labels'), { light });
-const hud = new Hud(AGENTS);
+// ---------- language ----------
+
+const $ = (id) => document.getElementById(id);
+document.documentElement.lang = lang;
+$('why').textContent = T.why;
+$('llm-link').textContent = T.llmLink;
+{
+  // Keep the address written in the HTML (the wiki copy rewrites it), add the language.
+  const link = new URL($('llm-link').getAttribute('href'), location.href);
+  link.searchParams.set('lang', lang);
+  $('llm-link').href = link.href;
+}
+for (const id of ['info-close', 'final-close']) $(id).setAttribute('aria-label', T.close);
+$('log-toggle').setAttribute('aria-label', T.logToggle);
+$('goal').placeholder = T.placeholder;
+$('goal').value = T.goal;
+$('go').textContent = T.start;
+{
+  // The switch keeps the other options of the address (?vertical=1, ?local=1, …).
+  const other = lang === 'it' ? 'en' : 'it';
+  const next = new URLSearchParams(params);
+  next.set('lang', other);
+  $('lang-switch').textContent = other.toUpperCase();
+  $('lang-switch').hreflang = other;
+  $('lang-switch').href = `?${next}`;
+}
+
+const app = $('app');
+const brain = new Brain($('scene'), $('labels'), { light, regions: T.regions });
+const hud = new Hud(AGENTS, T);
 
 // ---------- layout ----------
 
@@ -44,14 +74,13 @@ layout();
 // ---------- teaching card ----------
 
 function showAgentInfo(agent) {
-  const info = ANALOGIES[agent];
-  const meta = AGENTS.find((a) => a.id === agent);
-  if (!info || !meta) return;
-  hud.showInfo(`${agent}.md · ${meta.region}`, [
-    { heading: 'nello sciame', text: info.does },
-    { heading: 'nel cervello', text: info.brain },
-    { heading: 'dove il paragone regge', text: info.holds },
-    { heading: 'dove si rompe', text: info.breaks },
+  const info = ANALOGIES[lang][agent];
+  if (!info) return;
+  hud.showInfo(`${agent}.md · ${T.regions[agent]}`, [
+    { heading: T.card.does, text: info.does },
+    { heading: T.card.brain, text: info.brain },
+    { heading: T.card.holds, text: info.holds },
+    { heading: T.card.breaks, text: info.breaks },
   ], { fit: info.fit, wiki: info.wiki });
   brain.kick(agent, 1.2); // light up the region so it is clear which one the card is about
 }
@@ -59,7 +88,7 @@ hud.onAgentSelect(showAgentInfo);
 brain.onSelect = showAgentInfo;
 // On a phone the log starts closed: it would take most of the screen. ?vertical=1 (recording) keeps it open.
 hud.setupLogToggle(window.innerWidth < 600 && !vertical, layout);
-hud.onWhy(() => hud.showInfo(WHY.title, WHY.paragraphs.map((text) => ({ text })), { wiki: WHY.wiki }));
+hud.onWhy(() => hud.showInfo(WHY[lang].title, WHY[lang].paragraphs.map((text) => ({ text })), { wiki: WHY[lang].wiki }));
 
 // ---------- run state ----------
 
@@ -195,9 +224,9 @@ function startLocal(goal) {
   simulated = true;
   hud.setSimulated(true);
   if (cancelLocal) cancelLocal();
-  cancelLocal = runLocalSim(goal, handleEvent, { forceError: params.get('err') === '1' });
+  cancelLocal = runLocalSim(goal, handleEvent, T.sim, { forceError: params.get('err') === '1' });
   // Written after the run has opened, because a new run clears the log.
-  if (localReason) uiNote(`${localReason} · uso il simulatore`);
+  if (localReason) uiNote(T.note.useSim(localReason));
 }
 
 /** Real agents through the Worker. Any refusal falls back to the simulator, and says why. */
@@ -211,21 +240,22 @@ async function startApi(goal) {
   try {
     token = await turnstileToken(api.sitekey, document.getElementById('ts'));
   } catch {
-    return fallback('Verifica anti-bot non riuscita');
+    return fallback(T.note.turnstile);
   }
   let res;
   try {
     res = await fetch(`${api.url}/run`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ goal, token }),
+      body: JSON.stringify({ goal, token, lang }),
     });
   } catch {
-    return fallback('Servizio degli agenti non raggiungibile');
+    return fallback(T.note.apiDown);
   }
   if (!res.ok || !res.body) {
+    // The Worker writes `detail` in the language it was sent.
     const body = await res.json().catch(() => ({}));
-    return fallback(typeof body.detail === 'string' ? body.detail : `Avvio rifiutato (${res.status})`);
+    return fallback(typeof body.detail === 'string' ? body.detail : T.note.refused(res.status));
   }
   simulated = false;
   localReason = null;
@@ -251,7 +281,7 @@ async function startApi(goal) {
     }
   } catch { /* connection lost: reported below */ }
   if (!closed) {
-    uiNote('Connessione con gli agenti interrotta');
+    uiNote(T.note.streamLost);
     endRun();
   }
 }
@@ -264,15 +294,15 @@ async function start(goal) {
     const res = await fetch('/task', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ goal }),
+      body: JSON.stringify({ goal, lang }),
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      uiNote(`Avvio rifiutato (${res.status}): ${typeof body.detail === 'string' ? body.detail : 'richiesta non valida'}`);
+      uiNote(T.note.refusedWhy(res.status, typeof body.detail === 'string' ? body.detail : T.note.invalid));
       if (res.status !== 409) hud.setRunning(false);
     }
   } catch {
-    uiNote('Backend non raggiungibile');
+    uiNote(T.note.backendDown);
     hud.setRunning(false);
   }
 }
@@ -304,14 +334,14 @@ async function init() {
         simulated = false;
         clockSkew = Date.now() / 1000 - status.now;
       } else if (status) {
-        localReason = 'Esecuzioni reali di oggi esaurite';
+        localReason = T.note.dailyOut;
       }
     } catch { /* Worker unreachable: stay on the local simulator */ }
   }
   hud.setSimulated(simulated);
   hud.onStart(start);
   // ?demo=1 starts a run right away: handy for screen recording.
-  if (params.get('demo') === '1') start(document.getElementById('goal').value.trim());
+  if (params.get('demo') === '1') start($('goal').value.trim());
 }
 
 init();

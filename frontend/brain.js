@@ -250,10 +250,12 @@ export class Brain {
   /**
    * @param {HTMLCanvasElement} canvas
    * @param {HTMLElement} labelLayer container for the HTML region labels
-   * @param {{light?: boolean}} [opts] light = draw the negative for the CSS-inverted light theme
+   * @param {{light?: boolean, regions?: Record<string, string>}} [opts] light = draw the negative for the
+   *   CSS-inverted light theme; regions = region name shown under each agent (default: AGENTS[].region)
    */
   constructor(canvas, labelLayer, opts = {}) {
     this.palette = opts.light ? PALETTES.light : PALETTES.dark;
+    this.regionNames = opts.regions ?? {};   // label under each region, in the page's language
     this.index = new Map(AGENTS.map((a, i) => [a.id, i]));
     this.state = AGENTS.map(() => 'idle');
     this.act = new Array(REGIONS).fill(0);   // smoothed "working" glow
@@ -354,7 +356,7 @@ export class Brain {
       file.textContent = `${a.id}.md`;
       const sub = document.createElement('span');
       sub.className = 's';
-      sub.textContent = a.region;
+      sub.textContent = this.regionNames[a.id] ?? a.region;
       el.append(file, sub);
       el.addEventListener('click', () => this.onSelect?.(a.id));
       layer.appendChild(el);

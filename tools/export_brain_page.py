@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 
 FRONTEND = Path(__file__).resolve().parent.parent / "frontend"
-FILES = ["index.html", "style.css", "main.js", "brain.js", "hud.js", "localsim.js", "analogies.js", "turnstile.js"]
+FILES = ["index.html", "style.css", "main.js", "brain.js", "hud.js", "localsim.js", "analogies.js", "turnstile.js", "i18n.js"]
 REWRITES = [
     ('<html lang="it">', '<html lang="it" data-static>'),       # main.js: skip the backend
     ('href="llm/"', 'href="../inside-an-llm/"'),

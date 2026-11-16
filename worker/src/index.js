@@ -1,10 +1,12 @@
 // HTTP entry point of the Worker.
 //   GET  /status  -> { mode, remaining, sitekey, now }
-//   POST /run     -> { goal, token }  the answer is the run's event stream (text/event-stream)
+//   POST /run     -> { goal, token, lang }  the answer is the run's event stream (text/event-stream)
+// Refusals are { code, detail }: `code` is stable (the page translates it), `detail` follows `lang`.
 // A run starts only from an allowed page, after a Turnstile check, and within two limits:
 // runs per visitor per hour and runs per day for everybody.
 import { Slots } from './llm.js';
 import { runGoal } from './orchestrator.js';
+import { t } from './texts.js';
 
 const LABEL_MAX = 80;
 const FULL_LABEL_MAX = 300; // a label cut at LABEL_MAX keeps its full text in payload.full_label
@@ -37,7 +39,7 @@ async function count(env, key) {
 /**
  * Check both limits and, if there is room, count this run.
  * KV has no atomic increment: under simultaneous requests the caps can be exceeded by a few runs.
- * @returns {Promise<string|null>} the reason for refusing, or null
+ * @returns {Promise<string|null>} the code of the reason for refusing ('daily' | 'hourly'), or null
  */
 async function takeRun(env, ip) {
   const hour = Math.floor(Date.now() / 3600000);
@@ -45,8 +47,8 @@ async function takeRun(env, ip) {
   const ipKey = `ip:${await sha256(`${env.TURNSTILE_SECRET}:${ip}:${hour}`)}`;
   const dayKey = `day:${today()}`;
   const [byIp, byDay] = await Promise.all([count(env, ipKey), count(env, dayKey)]);
-  if (byDay >= Number(env.DAILY_RUNS)) return 'Esecuzioni reali di oggi esaurite';
-  if (byIp >= Number(env.IP_RUNS_PER_HOUR)) return 'Hai raggiunto il limite di esecuzioni reali per quest’ora';
+  if (byDay >= Number(env.DAILY_RUNS)) return 'daily';
+  if (byIp >= Number(env.IP_RUNS_PER_HOUR)) return 'hourly';
   await Promise.all([
     env.LIMITS.put(ipKey, String(byIp + 1), { expirationTtl: 3700 }),
     env.LIMITS.put(dayKey, String(byDay + 1), { expirationTtl: 2 * 86400 }),
@@ -68,7 +70,7 @@ async function turnstileOk(env, token, ip) {
   }
 }
 
-function stream(env, ctx, goal, cors) {
+function stream(env, ctx, goal, lang, cors) {
   const { readable, writable } = new TransformStream();
   const writer = writable.getWriter();
   const encoder = new TextEncoder();
@@ -80,7 +82,7 @@ function stream(env, ctx, goal, cors) {
   };
   const ping = setInterval(() => write(': ping\n\n'), 10000);
   const run = {
-    env, emit, signal: abort.signal, slots: new Slots(),
+    env, emit, lang, signal: abort.signal, slots: new Slots(),
     budget: { calls: 0, max: Number(env.MAX_CALLS_PER_RUN), tokens: 0 },
   };
   ctx.waitUntil(runGoal(run, goal).finally(() => {
@@ -116,20 +118,21 @@ export default {
     }
 
     if (request.method === 'POST' && url.pathname === '/run') {
-      if (!cors) return json({ detail: 'Origine non ammessa' }, 403, {});
+      const refuse = (code, status, lang, values) =>
+        json({ code, detail: t(lang, `e_${code}`, values) }, status, cors ?? {});
+      if (!cors) return refuse('origin', 403, 'it');
       let body;
-      try { body = await request.json(); } catch { return json({ detail: 'Richiesta non valida' }, 400, cors); }
+      try { body = await request.json(); } catch { return refuse('request', 400, 'it'); }
+      const lang = body?.lang === 'en' ? 'en' : 'it';
       const goal = typeof body?.goal === 'string' ? body.goal.trim() : '';
-      if (goal.length < GOAL_MIN || goal.length > GOAL_MAX) {
-        return json({ detail: `L’obiettivo deve avere da ${GOAL_MIN} a ${GOAL_MAX} caratteri` }, 422, cors);
-      }
+      if (goal.length < GOAL_MIN || goal.length > GOAL_MAX) return refuse('goal', 422, lang, { min: GOAL_MIN, max: GOAL_MAX });
       const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
-      if (!(await turnstileOk(env, body.token, ip))) return json({ detail: 'Verifica anti-bot non superata' }, 403, cors);
+      if (!(await turnstileOk(env, body.token, ip))) return refuse('turnstile', 403, lang);
       const refused = await takeRun(env, ip);
-      if (refused) return json({ detail: refused }, 429, cors);
-      return stream(env, ctx, goal, cors);
+      if (refused) return refuse(refused, 429, lang);
+      return stream(env, ctx, goal, lang, cors);
     }
 
-    return json({ detail: 'Non trovato' }, 404, cors ?? {});
+    return json({ code: 'not_found', detail: t('it', 'e_not_found') }, 404, cors ?? {});
   },
 };

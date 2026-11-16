@@ -2,8 +2,8 @@
 // when the page is published on the wiki, so that "back" leads to the wiki, not to Swarm Brain.
 export const LINKS = {
   back: {
-    it: { href: '../', text: '← swarm brain' },
-    en: { href: '../', text: '← swarm brain' },
+    it: { href: '../?lang=it', text: '← swarm brain' },
+    en: { href: '../?lang=en', text: '← swarm brain' },
   },
   wiki: {
     it: 'https://wiki.daniellomario.com/it/llm-inference',

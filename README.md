@@ -13,8 +13,10 @@ and every action they take becomes an event that animates the brain in the brows
 | `critic` | anterior cingulate cortex | checks the draft and gives a verdict |
 | `orchestrator` | thalamus (centre) | routes the work; it is plain code and calls no model |
 
-The dashboard interface is in Italian. The companion page [Inside an LLM](#inside-an-llm-llm)
-is available in English and Italian.
+Both pages, the dashboard and [Inside an LLM](#inside-an-llm-llm), are in English and Italian:
+`?lang=en|it`, otherwise the browser's language. The dashboard sends its language with the goal, so
+the event labels follow it; the system prompts exist in both languages too (with Italian prompts
+only, English goals got Italian answers), and either way the agents answer in the goal's language.
 
 ## Quick start (simulated, no API key)
 
@@ -27,7 +29,7 @@ python3 -m venv .venv
 MODE=simulated .venv/bin/uvicorn backend.main:app --port 5173 --timeout-graceful-shutdown 2
 ```
 
-Open <http://localhost:5173/>, type a goal and press **AVVIA** (start).
+Open <http://localhost:5173/>, type a goal and press **START** (**AVVIA** in Italian).
 In this mode no model is called: events come from a simulator and the **SIMULATED** badge stays
 visible. The backend also serves the frontend, so a single port is enough.
 
@@ -160,15 +162,17 @@ current text on hover, and opens its step on click.
 - Labels longer than 80 characters are cut, and the whole text (up to 300) is in `payload.full_label`; the log shows that.
 - `final`: `payload.result` is the final text; `payload.simulated` tells whether it is a placeholder.
 
-Other routes: `POST /task` (`{"goal": "…"}`; 409 if a task is already running), `GET /status`.
+Other routes: `POST /task` (`{"goal": "…", "lang": "it|en"}`, `lang` optional, default `it`; 409 if
+a task is already running), `GET /status`.
 
 ## Layout
 
 ```
 backend/       main.py (API and SSE) · orchestrator.py · agents.py (prompts) · llm.py (limits, retries)
-               events.py (schema and bus) · simulator.py (MODE=simulated) · config.yaml
+               events.py (schema and bus) · texts.py (labels, it/en) · simulator.py (MODE=simulated)
+               config.yaml
 frontend/      index.html · main.js · brain.js (3D brain) · hud.js (panels) · analogies.js
-               localsim.js (in-browser simulator) · turnstile.js · style.css
+               i18n.js (interface words) · localsim.js (in-browser simulator) · turnstile.js · style.css
 worker/        Cloudflare Worker that runs the agents for the public static copy
 frontend/llm/  index.html · main.js · transformer.js (the model) · scene.js (3D) · diagram.js (block diagram)
                tour.js (guide texts)

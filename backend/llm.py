@@ -20,6 +20,8 @@ import yaml
 from openai import AsyncOpenAI
 from tenacity import AsyncRetrying, RetryCallState, retry_if_exception, stop_after_attempt
 
+from backend.texts import t
+
 CONFIG_PATH = Path(__file__).with_name("config.yaml")
 RETRY_AFTER_CAP_SECONDS = 120.0
 
@@ -173,10 +175,11 @@ class RunBudget:
     max_calls: int
     calls: int = 0
     total_tokens: int = 0
+    lang: str = "it"   # language of the run's labels (backend/texts.py)
 
     def take(self) -> int:
         if self.calls >= self.max_calls:
-            raise LimitExceeded(f"Limite di {self.max_calls} chiamate LLM per esecuzione raggiunto")
+            raise LimitExceeded(t(self.lang, "max_calls", n=self.max_calls))
         self.calls += 1
         return self.calls
 
@@ -204,15 +207,15 @@ def _retryable(exc: BaseException) -> bool:
     return isinstance(exc, (openai.RateLimitError, openai.APIConnectionError, openai.InternalServerError))
 
 
-def _reason(exc: BaseException | None) -> tuple[str, int | None]:
+def _reason(exc: BaseException | None, lang: str) -> tuple[str, int | None]:
     if isinstance(exc, openai.RateLimitError):
         return "429 rate limit", 429
     if isinstance(exc, openai.APITimeoutError):
         return "timeout", None
     if isinstance(exc, openai.APIConnectionError):
-        return "errore di rete", None
+        return t(lang, "net_error"), None
     if isinstance(exc, openai.APIStatusError):
-        return f"errore HTTP {exc.status_code}", exc.status_code
+        return t(lang, "http_error", status=exc.status_code), exc.status_code
     return type(exc).__name__, None
 
 
@@ -236,8 +239,8 @@ class LLMGateway:
         self._rate = RateLimiter(settings.limits.requests_per_minute, rate_period)
         self._clients: dict[tuple[str, str], AsyncOpenAI] = {}
 
-    def new_budget(self) -> RunBudget:
-        return RunBudget(max_calls=self.settings.limits.max_calls_per_run)
+    def new_budget(self, lang: str = "it") -> RunBudget:
+        return RunBudget(max_calls=self.settings.limits.max_calls_per_run, lang=lang)
 
     def _client(self, cfg: AgentConfig) -> AsyncOpenAI:
         key = (cfg.base_url, cfg.api_key_env)
@@ -280,18 +283,19 @@ class LLMGateway:
             raise ConfigError(f"Agente '{agent}' non presente in config.yaml")
         if not cfg.model.strip():
             raise ConfigError(f"Modello non impostato per '{agent}'")
-        limits = self.settings.limits
+        limits, lang = self.settings.limits, budget.lang
         wanted = cfg.max_tokens if max_tokens is None else max_tokens
         if wanted > limits.max_tokens_per_call:
-            raise LimitExceeded(f"max_tokens {wanted} oltre il limite di {limits.max_tokens_per_call} per chiamata")
+            raise LimitExceeded(t(lang, "max_tokens", wanted=wanted, limit=limits.max_tokens_per_call))
         client = self._client(cfg)
         call_no = budget.take()
 
         def before_sleep(state: RetryCallState) -> None:
-            reason, status = _reason(state.outcome.exception() if state.outcome else None)
+            reason, status = _reason(state.outcome.exception() if state.outcome else None, lang)
             delay = state.next_action.sleep if state.next_action else 0.0
             self._emit(
-                "error", agent, f"{reason} · tentativo {state.attempt_number}/{limits.max_retries + 1} · riprovo tra {delay:.0f} s",
+                "error", agent,
+                t(lang, "retry", reason=reason, attempt=state.attempt_number, total=limits.max_retries + 1, delay=f"{delay:.0f}"),
                 payload={"fatal": False, "status": status, "attempt": state.attempt_number, "retry_in": round(delay, 2)},
             )
 
@@ -320,12 +324,12 @@ class LLMGateway:
                             extra_body=cfg.extra_body,
                         )
         except openai.OpenAIError as exc:
-            reason, status = _reason(exc)
+            reason, status = _reason(exc, lang)
             self._emit(
                 "tool_call", agent, f"LLM ✕ {reason}",
                 payload={"tool": "llm", "phase": "failed", "status": status, "call": call_no},
             )
-            raise LLMError(f"Chiamata LLM fallita ({reason})") from exc
+            raise LLMError(t(lang, "call_failed", reason=reason)) from exc
 
         choice = response.choices[0] if response.choices else None
         text = (choice.message.content or "").strip() if choice else ""
@@ -338,14 +342,14 @@ class LLMGateway:
         if tokens:
             budget.total_tokens += tokens["total"]
         self._emit(
-            "tool_call", agent, f"LLM ◂ {tokens['total']} token" if tokens else "LLM ◂ risposta (token n/d)",
+            "tool_call", agent, t(lang, "llm_tokens", n=tokens["total"]) if tokens else t(lang, "llm_no_usage"),
             payload={
                 "tool": "llm", "phase": "end", "call": call_no, "tokens": tokens,
                 "ms": round((time.monotonic() - started) * 1000),
             },
         )
         if not text:
-            raise LLMError("Il modello ha restituito una risposta vuota")
+            raise LLMError(t(lang, "empty"))
         return LLMResult(
             text=text,
             prompt_tokens=tokens["prompt"] if tokens else None,

@@ -13,8 +13,12 @@ function clock(seconds) {
 }
 
 export class Hud {
-  /** @param {{id: string, region: string}[]} agents */
-  constructor(agents) {
+  /**
+   * @param {{id: string, region: string}[]} agents
+   * @param {object} T interface words (i18n.js)
+   */
+  constructor(agents, T) {
+    this.T = T;
     this.rows = new Map();
     this.tracks = new Map();
     this.segments = [];      // {agent, el, t0, t1|null}: one bar per stretch of work
@@ -98,7 +102,7 @@ export class Hud {
     if (extra.fit) {
       const tag = document.createElement('span');
       tag.className = `fit ${extra.fit}`;
-      tag.textContent = `analogia ${extra.fit}`;
+      tag.textContent = this.T.fit[extra.fit] ?? extra.fit;
       body.appendChild(tag);
     }
     if (extra.wiki) {
@@ -106,7 +110,7 @@ export class Hud {
       a.href = extra.wiki;
       a.target = '_blank';
       a.rel = 'noopener';
-      a.textContent = 'approfondisci nella wiki ↗';
+      a.textContent = this.T.wikiMore;
       body.append(document.createElement('br'), a);
     }
     $('info').hidden = false;
@@ -129,7 +133,7 @@ export class Hud {
 
   setRunning(on) {
     $('go').disabled = on;
-    $('go').textContent = on ? 'IN CORSO' : 'AVVIA';
+    $('go').textContent = on ? this.T.running : this.T.start;
   }
 
   /** @param {string} agent @param {'idle'|'working'|'done'|'error'} state */
@@ -151,7 +155,7 @@ export class Hud {
   /** @param {number} calls @param {number|null} tokens null = the provider gave no usage data */
   setCounters(calls, tokens) {
     $('calls').textContent = String(calls);
-    $('tokens').textContent = tokens === null ? 'n/d' : tokens.toLocaleString('it-IT');
+    $('tokens').textContent = tokens === null ? this.T.notAvailable : tokens.toLocaleString(this.T.locale);
   }
 
   // ---------- timer ----------

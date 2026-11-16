@@ -4,7 +4,10 @@ Runs the agents for the public, static copy of Swarm Brain, so that the page can
 models without a server. Same flow and same event schema as the Python backend.
 
 - `GET /status` → `{ mode, remaining, sitekey, now }`
-- `POST /run` with `{ goal, token }` → the run's events as `text/event-stream`
+- `POST /run` with `{ goal, token, lang }` → the run's events as `text/event-stream`
+  (`lang`: `it` or `en`, default `it`; labels, prompts and refusal messages follow it). A refusal is
+  `{ code, detail }`: `code` is stable (`origin`, `request`, `goal`, `turnstile`, `daily`, `hourly`),
+  `detail` is a sentence in `lang`.
 
 A run starts only if all of these hold:
 
@@ -60,4 +63,5 @@ Then export the page with the Worker's address:
 python3 tools/export_brain_page.py ~/dev/wiki/lab/swarm-brain https://swarm-api.daniellomario.com
 ```
 
-The prompts in `src/agents.js` mirror `backend/agents.py`: change both together.
+The prompts in `src/agents.js` and the labels in `src/texts.js` mirror `backend/agents.py` and
+`backend/texts.py`: change both together.

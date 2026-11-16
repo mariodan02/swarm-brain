@@ -2,14 +2,11 @@
 // revision -> final result. Same flow and same events as backend/orchestrator.py.
 import { WORKERS } from './agents.js';
 import { AgentFailure, complete } from './llm.js';
+import { t } from './texts.js';
 
 const MAX_SUBTASKS = 6;
 const CONTEXT_CHARS = 6000; // each earlier result is cut to this length before it goes into a prompt
-const FOOTER =
-  '\n\n—\nNota: testo prodotto da modelli linguistici senza accesso al web. ' +
-  'I fatti riportati non sono stati verificati su fonti esterne.';
-
-const clip = (text) => (text.length <= CONTEXT_CHARS ? text : `${text.slice(0, CONTEXT_CHARS)}\n[… testo tagliato per lunghezza]`);
+const clip = (text, lang) => (text.length <= CONTEXT_CHARS ? text : `${text.slice(0, CONTEXT_CHARS)}\n${t(lang, 'clipped')}`);
 
 /** Extract and validate the plan from the planner's answer. Throws Error with the reason. */
 export function parsePlan(text) {
@@ -48,52 +45,52 @@ export function parsePlan(text) {
 
 /** Run one goal to the end. Never throws for agent or provider failures: they become events. */
 export async function runGoal(run, goal) {
-  const { emit, budget } = run;
-  emit('task_started', 'orchestrator', `Obiettivo: ${goal}`, { payload: { goal, simulated: false } });
+  const { emit, budget, lang } = run;
+  emit('task_started', 'orchestrator', t(lang, 'goal', { goal }), { payload: { goal, simulated: false } });
   try {
     const plan = await makePlan(run, goal);
     const results = await execute(run, goal, plan);
     const { text, verdict, revised } = await review(run, goal, plan, results);
-    emit('final', 'orchestrator', 'Risultato finale pronto', {
-      payload: { result: text + FOOTER, simulated: false, verdict, revised, calls: budget.calls, tokens: budget.tokens },
+    emit('final', 'orchestrator', t(lang, 'final_ready'), {
+      payload: { result: text + t(lang, 'footer'), simulated: false, verdict, revised, calls: budget.calls, tokens: budget.tokens },
     });
   } catch (err) {
     const agent = err instanceof AgentFailure ? err.agent : 'orchestrator';
-    const label = err instanceof AgentFailure ? err.message : 'Errore interno';
+    const label = err instanceof AgentFailure ? err.message : t(lang, 'internal');
     emit('error', agent, label, { payload: { fatal: true, calls: budget.calls, tokens: budget.tokens } });
   }
 }
 
 async function makePlan(run, goal) {
-  const { emit } = run;
-  emit('message', 'orchestrator', 'Richiesta piano', { target: 'planner' });
-  emit('task_started', 'planner', 'Scomposizione in sotto-compiti');
-  const messages = [{ role: 'user', content: `Obiettivo: ${goal}` }];
-  let answer = await complete(run, 'planner', messages, 'piano JSON');
+  const { emit, lang } = run;
+  emit('message', 'orchestrator', t(lang, 'ask_plan'), { target: 'planner' });
+  emit('task_started', 'planner', t(lang, 'planning'));
+  const messages = [{ role: 'user', content: t(lang, 'u_goal', { goal }) }];
+  let answer = await complete(run, 'planner', messages, t(lang, 'p_plan'));
   let plan;
   try {
     plan = parsePlan(answer.text);
   } catch (first) {
     // One second chance, showing the planner what was wrong.
-    emit('error', 'planner', `Piano non valido: ${first.message} · nuova richiesta`, { payload: { fatal: false } });
+    emit('error', 'planner', t(lang, 'plan_retry', { reason: first.message }), { payload: { fatal: false } });
     messages.push(
       { role: 'assistant', content: answer.text },
-      { role: 'user', content: `Il piano non è valido: ${first.message}. Rispondi solo con il JSON corretto.` },
+      { role: 'user', content: t(lang, 'u_plan_fix', { reason: first.message }) },
     );
-    answer = await complete(run, 'planner', messages, 'piano JSON (correzione)');
+    answer = await complete(run, 'planner', messages, t(lang, 'p_plan_fix'));
     try { plan = parsePlan(answer.text); } catch (second) {
-      throw new AgentFailure('planner', `Piano non valido dopo 2 tentativi: ${second.message}`);
+      throw new AgentFailure('planner', t(lang, 'plan_failed', { reason: second.message }));
     }
   }
-  emit('task_done', 'planner', `Piano pronto: ${plan.length} sotto-compiti`, {
+  emit('task_done', 'planner', t(lang, 'plan_ready', { n: plan.length }), {
     payload: { plan: plan.map((s) => ({ id: s.id, agent: s.agent, task: s.task, depends_on: s.dependsOn })) },
   });
-  emit('message', 'planner', 'Piano consegnato', { target: 'orchestrator' });
+  emit('message', 'planner', t(lang, 'plan_sent'), { target: 'orchestrator' });
   return plan;
 }
 
 async function execute(run, goal, plan) {
-  const { emit } = run;
+  const { emit, lang } = run;
   const byId = new Map(plan.map((s) => [s.id, s]));
   const results = new Map();
   const shared = []; // what the memory agent wrote: given to every later sub-task
@@ -104,22 +101,22 @@ async function execute(run, goal, plan) {
     if (!started.has(sub.id)) {
       started.set(sub.id, (async () => {
         await Promise.all(sub.dependsOn.map((dep) => one(byId.get(dep))));
-        emit('message', 'orchestrator', `Assegna ${sub.id}: ${sub.task}`, { target: sub.agent, payload: { task: sub.id } });
-        const parts = [`Obiettivo generale: ${goal}`, `Il tuo sotto-compito (${sub.id}): ${sub.task}`];
-        if (shared.length && sub.agent !== 'memory') parts.push(`Contesto condiviso (memoria):\n${clip(shared.join('\n\n'))}`);
+        emit('message', 'orchestrator', t(lang, 'assign', { id: sub.id, task: sub.task }), { target: sub.agent, payload: { task: sub.id } });
+        const parts = [t(lang, 'u_overall', { goal }), t(lang, 'u_subtask', { id: sub.id, task: sub.task })];
+        if (shared.length && sub.agent !== 'memory') parts.push(`${t(lang, 'u_shared')}\n${clip(shared.join('\n\n'), lang)}`);
         for (const dep of sub.dependsOn) {
           const source = byId.get(dep).agent;
-          if (source !== sub.agent) emit('message', source, `Passa il risultato di ${dep}`, { target: sub.agent, payload: { task: dep } });
-          parts.push(`Risultato di ${dep} (${source}):\n${clip(results.get(dep))}`);
+          if (source !== sub.agent) emit('message', source, t(lang, 'pass', { id: dep }), { target: sub.agent, payload: { task: dep } });
+          parts.push(`${t(lang, 'u_result_of', { id: dep, agent: source })}\n${clip(results.get(dep), lang)}`);
         }
         emit('task_started', sub.agent, `${sub.id} · ${sub.task}`, { payload: { task: sub.id } });
         const answer = await complete(run, sub.agent, [{ role: 'user', content: parts.join('\n\n') }], sub.task);
         results.set(sub.id, answer.text);
         if (sub.agent === 'memory') shared.push(answer.text);
-        emit('task_done', sub.agent, `${sub.id} completato${answer.truncated ? ' (risposta troncata)' : ''}`, {
+        emit('task_done', sub.agent, t(lang, 'done', { id: sub.id }) + (answer.truncated ? t(lang, 'truncated') : ''), {
           payload: { task: sub.id, chars: answer.text.length, truncated: answer.truncated },
         });
-        emit('message', sub.agent, `Risultato ${sub.id}`, { target: 'orchestrator', payload: { task: sub.id } });
+        emit('message', sub.agent, t(lang, 'result', { id: sub.id }), { target: 'orchestrator', payload: { task: sub.id } });
       })());
     }
     return started.get(sub.id);
@@ -129,28 +126,28 @@ async function execute(run, goal, plan) {
 }
 
 async function review(run, goal, plan, results) {
-  const { emit } = run;
+  const { emit, lang } = run;
   const draftId = plan.filter((s) => s.agent === 'executor').at(-1).id;
   const draft = results.get(draftId);
 
-  emit('message', 'executor', 'Bozza da controllare', { target: 'critic', payload: { task: draftId } });
-  emit('task_started', 'critic', 'Controllo di qualità della bozza');
-  const check = await complete(run, 'critic', [{ role: 'user', content: `Obiettivo: ${goal}\n\nBozza:\n${clip(draft)}` }], 'controllo qualità');
+  emit('message', 'executor', t(lang, 'to_check'), { target: 'critic', payload: { task: draftId } });
+  emit('task_started', 'critic', t(lang, 'checking'));
+  const user = `${t(lang, 'u_goal', { goal })}\n\n${t(lang, 'u_draft')}\n${clip(draft, lang)}`;
+  const check = await complete(run, 'critic', [{ role: 'user', content: user }], t(lang, 'p_check'));
   const firstLine = (check.text.split('\n').find((line) => line.trim()) ?? '').toUpperCase();
-  const revise = firstLine.includes('RIVEDERE');
-  const verdict = revise ? 'RIVEDERE' : 'OK';
-  emit('task_done', 'critic', `Verdetto: ${verdict}`, { payload: { verdict } });
+  const revise = firstLine.includes('RIVEDERE') || firstLine.includes('REVISE'); // Italian or English prompt
+  const verdict = revise ? 'RIVEDERE' : 'OK'; // payload value, the same in both languages
+  emit('task_done', 'critic', t(lang, revise ? 'verdict_revise' : 'verdict_ok'), { payload: { verdict } });
   if (!revise) {
-    emit('message', 'critic', 'Bozza approvata', { target: 'orchestrator' });
+    emit('message', 'critic', t(lang, 'approved'), { target: 'orchestrator' });
     return { text: draft, verdict, revised: false };
   }
-  emit('message', 'critic', 'Revisione richiesta', { target: 'executor' });
-  emit('task_started', 'executor', 'Revisione della bozza');
-  const revised = await complete(run, 'executor', [{
-    role: 'user',
-    content: `Obiettivo: ${goal}\n\nBozza:\n${clip(draft)}\n\nNote di revisione del critic:\n${clip(check.text)}`,
-  }], 'revisione');
-  emit('task_done', 'executor', `Bozza rivista${revised.truncated ? ' (risposta troncata)' : ''}`);
-  emit('message', 'executor', 'Versione finale', { target: 'orchestrator' });
+  emit('message', 'critic', t(lang, 'revise_asked'), { target: 'executor' });
+  emit('task_started', 'executor', t(lang, 'revising'));
+  const content = `${t(lang, 'u_goal', { goal })}\n\n${t(lang, 'u_draft')}\n${clip(draft, lang)}` +
+    `\n\n${t(lang, 'u_notes')}\n${clip(check.text, lang)}`;
+  const revised = await complete(run, 'executor', [{ role: 'user', content }], t(lang, 'p_revision'));
+  emit('task_done', 'executor', t(lang, 'revised') + (revised.truncated ? t(lang, 'truncated') : ''));
+  emit('message', 'executor', t(lang, 'final_version'), { target: 'orchestrator' });
   return { text: revised.text, verdict, revised: true };
 }
